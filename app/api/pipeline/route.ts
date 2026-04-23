@@ -24,7 +24,10 @@ export async function POST(request: NextRequest) {
   const backendUrl = process.env.PIPELINE_BACKEND_URL || "http://localhost:3001";
   const upstream = await fetch(`${backendUrl}/pipeline`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      "bypass-tunnel-reminder": "true", // required for localtunnel
+    },
     body: JSON.stringify({
       keyword,
       max_leads,
