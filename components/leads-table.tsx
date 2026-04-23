@@ -519,10 +519,7 @@ export default function LeadsTable({ leads: initialLeads }: { leads: Lead[] }) {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const router = useRouter();
 
-  const adTypes = useMemo(
-    () => [...new Set(leads.map((l) => l.ad_type).filter(Boolean))] as string[],
-    [leads]
-  );
+  const adTypes = ["image", "video", "carousel"];
 
   const activeFilterCount = useMemo(() => {
     let n = 0;
