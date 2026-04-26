@@ -346,7 +346,7 @@ export default function LeadsTable({ leads: initialLeads, mode = "active" }: { l
     }
   }
 
-  async function handleBulkAction(action: "delete" | "archive") {
+  async function handleBulkAction(action: "delete" | "archive" | "restore") {
     setBulkLoading(true);
     const ids = [...checkedIds];
     await fetch("/api/leads/bulk", {
