@@ -3,31 +3,12 @@
 import { useState, useMemo, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
+import type { Lead } from "@/lib/types";
+import LeadPanel, { ScoreBadge, AdTypeBadge } from "@/components/lead-panel";
 
 const F = "var(--font-osh), sans-serif";
 
-export type Lead = {
-  id: string;
-  company_name: string;
-  ad_type: string | null;
-  niche: string | null;
-  business_score: number | null;
-  lead_quality: string | null;
-  score_reasoning: string | null;
-  suggested_service: string | null;
-  outreach_angle: string | null;
-  perplexity_research: string | null;
-  hebrew_email_draft: string | null;
-  email_address: string | null;
-  email_approved: boolean | null;
-  lemlist_status: string | null;
-  website_url: string | null;
-  facebook_page: string | null;
-  ad_url: string | null;
-  page_followers: number | null;
-  active_ads_count: number | null;
-  created_at: string;
-};
+export type { Lead };
 
 type SortKey = "company_name" | "business_score" | "ad_type" | "niche" | "created_at";
 type SortDir = "asc" | "desc";
@@ -35,6 +16,7 @@ type SortDir = "asc" | "desc";
 interface Filters {
   tier: "all" | "hot" | "warm" | "cold";
   adType: string[];
+  niche: string[];
   hasEmail: "all" | "yes" | "no";
   lemlist: "all" | "sent" | "pending";
   minScore: number;
@@ -43,6 +25,7 @@ interface Filters {
 const DEFAULT_FILTERS: Filters = {
   tier: "all",
   adType: [],
+  niche: [],
   hasEmail: "all",
   lemlist: "all",
   minScore: 0,
@@ -50,63 +33,10 @@ const DEFAULT_FILTERS: Filters = {
 
 // ── Badges ────────────────────────────────────────────────────────────────────
 
-function ScoreBadge({ score, tier }: { score: number | null; tier: string | null }) {
-  const colors: Record<string, { bg: string; text: string; border: string }> = {
-    hot:  { bg: "rgba(251,146,60,0.12)",  text: "rgb(251,146,60)",  border: "rgba(251,146,60,0.3)"  },
-    warm: { bg: "rgba(250,204,21,0.1)",   text: "rgb(250,204,21)",  border: "rgba(250,204,21,0.3)"  },
-    cold: { bg: "rgba(99,102,241,0.1)",   text: "rgb(129,140,248)", border: "rgba(99,102,241,0.25)" },
-  };
-  const c = colors[tier ?? "cold"] ?? colors.cold;
-  return (
-    <span
-      className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5"
-      style={{ background: c.bg, border: `1px solid ${c.border}`, fontWeight: 700, fontSize: "0.78rem", color: c.text }}
-    >
-      {tier === "hot" ? "🔥" : tier === "warm" ? "🌡" : "❄️"}
-      {score ?? "—"}/10
-    </span>
-  );
-}
-
-function AdTypeBadge({ type }: { type: string | null }) {
-  const map: Record<string, string> = { video: "וידאו", carousel: "קרוסל", image: "תמונה" };
-  return (
-    <span
-      className="rounded-md px-2 py-0.5"
-      style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", fontWeight: 400, fontSize: "0.78rem", color: "rgba(255,255,255,0.5)" }}
-    >
-      {map[type ?? ""] ?? type ?? "—"}
-    </span>
-  );
-}
-
 function LemlistBadge({ status }: { status: string | null }) {
   if (status === "sent")
     return <span style={{ fontWeight: 400, fontSize: "0.8rem", color: "rgb(74,222,128)" }}>✓ נשלח</span>;
   return <span style={{ fontWeight: 300, fontSize: "0.8rem", color: "rgba(255,255,255,0.2)" }}>ממתין</span>;
-}
-
-function CopyButton({ text }: { text: string }) {
-  const [copied, setCopied] = useState(false);
-  async function copy() {
-    await navigator.clipboard.writeText(text);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1800);
-  }
-  return (
-    <button
-      onClick={copy}
-      className="rounded-lg px-3 py-1.5 transition-colors"
-      style={{
-        fontFamily: F, fontWeight: 400, fontSize: "0.78rem",
-        background: copied ? "rgba(74,222,128,0.1)" : "rgba(255,255,255,0.06)",
-        border: copied ? "1px solid rgba(74,222,128,0.3)" : "1px solid rgba(255,255,255,0.1)",
-        color: copied ? "rgb(74,222,128)" : "rgba(255,255,255,0.5)",
-      }}
-    >
-      {copied ? "✓ הועתק" : "העתק"}
-    </button>
-  );
 }
 
 // ── Sort icon ─────────────────────────────────────────────────────────────────
@@ -126,11 +56,13 @@ function FilterPanel({
   onChange,
   onClose,
   adTypes,
+  niches,
 }: {
   filters: Filters;
   onChange: (f: Filters) => void;
   onClose: () => void;
   adTypes: string[];
+  niches: string[];
 }) {
   const ref = useRef<HTMLDivElement>(null);
 
@@ -145,10 +77,13 @@ function FilterPanel({
   const adTypeLabels: Record<string, string> = { video: "וידאו", carousel: "קרוסל", image: "תמונה" };
 
   function toggleAdType(t: string) {
-    const next = filters.adType.includes(t)
-      ? filters.adType.filter((x) => x !== t)
-      : [...filters.adType, t];
+    const next = filters.adType.includes(t) ? filters.adType.filter((x) => x !== t) : [...filters.adType, t];
     onChange({ ...filters, adType: next });
+  }
+
+  function toggleNiche(n: string) {
+    const next = filters.niche.includes(n) ? filters.niche.filter((x) => x !== n) : [...filters.niche, n];
+    onChange({ ...filters, niche: next });
   }
 
   return (
@@ -237,6 +172,30 @@ function FilterPanel({
         </div>
       )}
 
+      {/* Niche */}
+      {niches.length > 0 && (
+        <div>
+          <p style={{ fontWeight: 600, fontSize: "0.75rem", color: "rgba(255,255,255,0.35)", marginBottom: "0.5rem" }}>נישה</p>
+          <div className="flex gap-1.5 flex-wrap">
+            {niches.map((n) => (
+              <button
+                key={n}
+                onClick={() => toggleNiche(n)}
+                className="rounded-lg px-3 py-1 transition-all"
+                style={{
+                  fontWeight: filters.niche.includes(n) ? 700 : 400, fontSize: "0.8rem",
+                  background: filters.niche.includes(n) ? "rgba(99,102,241,0.2)" : "rgba(255,255,255,0.04)",
+                  border: filters.niche.includes(n) ? "1px solid rgba(99,102,241,0.4)" : "1px solid rgba(255,255,255,0.08)",
+                  color: filters.niche.includes(n) ? "rgb(129,140,248)" : "rgba(255,255,255,0.4)",
+                }}
+              >
+                {n}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Has email */}
       <div>
         <p style={{ fontWeight: 600, fontSize: "0.75rem", color: "rgba(255,255,255,0.35)", marginBottom: "0.5rem" }}>כתובת מייל</p>
@@ -293,219 +252,14 @@ function FilterPanel({
   );
 }
 
-// ── Detail Panel ──────────────────────────────────────────────────────────────
-
-function LeadPanel({ lead, onClose }: { lead: Lead; onClose: () => void }) {
-  const [emailText, setEmailText]   = useState(lead.hebrew_email_draft ?? "");
-  const [saving, setSaving]         = useState(false);
-  const [saveStatus, setSaveStatus] = useState<"idle" | "saved" | "error">("idle");
-  const isDirty = emailText !== (lead.hebrew_email_draft ?? "");
-
-  async function handleSaveEmail() {
-    setSaving(true);
-    try {
-      const res = await fetch(`/api/leads/${lead.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ hebrew_email_draft: emailText }),
-      });
-      setSaveStatus(res.ok ? "saved" : "error");
-    } catch {
-      setSaveStatus("error");
-    }
-    setSaving(false);
-    setTimeout(() => setSaveStatus("idle"), 2500);
-  }
-
-  return (
-    <motion.div
-      key="panel"
-      initial={{ x: "-100%", opacity: 0 }}
-      animate={{ x: 0, opacity: 1 }}
-      exit={{ x: "-100%", opacity: 0 }}
-      transition={{ type: "spring", damping: 28, stiffness: 280 }}
-      className="fixed top-0 right-56 bottom-0 z-40 flex flex-col overflow-hidden"
-      style={{ width: "min(520px, 42vw)", background: "#0d0d0d", borderLeft: "1px solid rgba(255,255,255,0.07)" }}
-      dir="rtl"
-    >
-      {/* Header */}
-      <div className="flex items-start justify-between px-7 py-6 border-b border-white/[0.07]">
-        <div className="flex flex-col gap-2">
-          <p style={{ fontWeight: 800, fontSize: "1.15rem", color: "#fff", lineHeight: 1.2 }}>
-            {lead.company_name}
-          </p>
-          <div className="flex items-center gap-2 flex-wrap">
-            <ScoreBadge score={lead.business_score} tier={lead.lead_quality} />
-            {lead.ad_type && <AdTypeBadge type={lead.ad_type} />}
-          </div>
-          {/* Stats row */}
-          <div className="flex items-center gap-4 mt-1" style={{ fontSize: "0.78rem", color: "rgba(255,255,255,0.3)" }}>
-            {lead.active_ads_count != null && (
-              <span>📢 {lead.active_ads_count} מודעות פעילות</span>
-            )}
-            {lead.page_followers != null && (
-              <span>👥 {lead.page_followers.toLocaleString()} עוקבים</span>
-            )}
-            <span>📅 {new Date(lead.created_at).toLocaleDateString("he-IL")}</span>
-          </div>
-        </div>
-        <button
-          onClick={onClose}
-          className="rounded-lg p-1.5 hover:bg-white/[0.07] transition-colors mt-0.5"
-          style={{ color: "rgba(255,255,255,0.4)", fontSize: "1.1rem", lineHeight: 1 }}
-        >
-          ✕
-        </button>
-      </div>
-
-      <div className="flex-1 overflow-y-auto px-7 py-6 flex flex-col gap-7">
-
-        {/* Links */}
-        <div className="flex flex-wrap gap-2">
-          {lead.website_url && (
-            <a href={lead.website_url} target="_blank" rel="noopener noreferrer"
-              className="rounded-lg px-3 py-1.5 transition-colors hover:bg-white/[0.08]"
-              style={{ fontWeight: 400, fontSize: "0.8rem", color: "rgb(129,140,248)", background: "rgba(99,102,241,0.08)", border: "1px solid rgba(99,102,241,0.2)" }}>
-              🌐 אתר
-            </a>
-          )}
-          {lead.facebook_page && (
-            <a href={lead.facebook_page} target="_blank" rel="noopener noreferrer"
-              className="rounded-lg px-3 py-1.5 transition-colors hover:bg-white/[0.08]"
-              style={{ fontWeight: 400, fontSize: "0.8rem", color: "rgb(129,140,248)", background: "rgba(99,102,241,0.08)", border: "1px solid rgba(99,102,241,0.2)" }}>
-              📱 פייסבוק
-            </a>
-          )}
-          {lead.ad_url && (
-            <a href={lead.ad_url} target="_blank" rel="noopener noreferrer"
-              className="rounded-lg px-3 py-1.5 transition-colors hover:bg-white/[0.08]"
-              style={{ fontWeight: 400, fontSize: "0.8rem", color: "rgb(129,140,248)", background: "rgba(99,102,241,0.08)", border: "1px solid rgba(99,102,241,0.2)" }}>
-              📢 מודעה
-            </a>
-          )}
-        </div>
-
-        {/* Claude analysis */}
-        {(lead.score_reasoning || lead.suggested_service || lead.outreach_angle) && (
-          <section>
-            <p style={{ fontWeight: 700, fontSize: "0.78rem", color: "rgba(255,255,255,0.3)", letterSpacing: "0.1em" }} className="uppercase mb-3">
-              ניתוח Claude
-            </p>
-            <div className="flex flex-col gap-3">
-              {lead.score_reasoning && (
-                <div className="rounded-xl p-4" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}>
-                  <p style={{ fontWeight: 700, fontSize: "0.78rem", color: "rgba(255,255,255,0.35)", marginBottom: "0.4rem" }}>מה גרם לציון</p>
-                  <p style={{ fontWeight: 300, fontSize: "0.88rem", color: "rgba(255,255,255,0.65)", lineHeight: 1.65 }}>{lead.score_reasoning}</p>
-                </div>
-              )}
-              {lead.suggested_service && (
-                <div className="rounded-xl p-4" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}>
-                  <p style={{ fontWeight: 700, fontSize: "0.78rem", color: "rgba(255,255,255,0.35)", marginBottom: "0.4rem" }}>שירות מומלץ</p>
-                  <p style={{ fontWeight: 300, fontSize: "0.88rem", color: "rgba(255,255,255,0.65)", lineHeight: 1.65 }}>{lead.suggested_service}</p>
-                </div>
-              )}
-              {lead.outreach_angle && (
-                <div className="rounded-xl p-4" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}>
-                  <p style={{ fontWeight: 700, fontSize: "0.78rem", color: "rgba(255,255,255,0.35)", marginBottom: "0.4rem" }}>זווית אאוטריץ׳</p>
-                  <p style={{ fontWeight: 300, fontSize: "0.88rem", color: "rgba(255,255,255,0.65)", lineHeight: 1.65 }}>{lead.outreach_angle}</p>
-                </div>
-              )}
-            </div>
-          </section>
-        )}
-
-        {/* Perplexity research */}
-        {lead.perplexity_research && (
-          <section>
-            <p style={{ fontWeight: 700, fontSize: "0.78rem", color: "rgba(255,255,255,0.3)", letterSpacing: "0.1em" }} className="uppercase mb-3">
-              מחקר Perplexity
-            </p>
-            <div className="rounded-xl p-4" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}>
-              <p style={{ fontWeight: 300, fontSize: "0.88rem", color: "rgba(255,255,255,0.6)", lineHeight: 1.75, whiteSpace: "pre-wrap" }}>
-                {lead.perplexity_research}
-              </p>
-            </div>
-          </section>
-        )}
-
-        {/* Editable email draft */}
-        {(
-          <section>
-            <div className="flex items-center justify-between mb-3">
-              <p style={{ fontWeight: 700, fontSize: "0.78rem", color: "rgba(255,255,255,0.3)", letterSpacing: "0.1em" }} className="uppercase">
-                טיוטת מייל
-              </p>
-              <div className="flex items-center gap-2">
-                {lead.email_approved && !isDirty && (
-                  <span style={{ fontWeight: 400, fontSize: "0.75rem", color: "rgb(74,222,128)" }}>✓ אושר</span>
-                )}
-                {isDirty && (
-                  <span style={{ fontWeight: 400, fontSize: "0.75rem", color: "rgb(250,204,21)" }}>● לא נשמר</span>
-                )}
-                <CopyButton text={emailText} />
-              </div>
-            </div>
-
-            {/* Editable textarea */}
-            <textarea
-              value={emailText}
-              onChange={(e) => setEmailText(e.target.value)}
-              rows={10}
-              className="w-full rounded-xl p-5 outline-none resize-none transition-all"
-              style={{
-                fontFamily: F, fontWeight: 400, fontSize: "0.9rem",
-                color: "rgba(255,255,255,0.75)", lineHeight: 1.8,
-                background: "rgba(99,102,241,0.05)",
-                border: isDirty ? "1px solid rgba(99,102,241,0.4)" : "1px solid rgba(99,102,241,0.15)",
-              }}
-              dir="rtl"
-            />
-
-            {/* Save button */}
-            <div className="flex justify-end mt-2">
-              <button
-                onClick={handleSaveEmail}
-                disabled={!isDirty || saving}
-                className="rounded-xl px-4 py-2 transition-all disabled:opacity-40"
-                style={{
-                  fontFamily: F, fontWeight: 700, fontSize: "0.82rem",
-                  background: saveStatus === "saved" ? "rgba(74,222,128,0.15)"
-                    : saveStatus === "error" ? "rgba(239,68,68,0.15)"
-                    : "rgba(99,102,241,0.2)",
-                  border: saveStatus === "saved" ? "1px solid rgba(74,222,128,0.3)"
-                    : saveStatus === "error" ? "1px solid rgba(239,68,68,0.3)"
-                    : "1px solid rgba(99,102,241,0.35)",
-                  color: saveStatus === "saved" ? "rgb(74,222,128)"
-                    : saveStatus === "error" ? "rgb(248,113,113)"
-                    : "rgb(129,140,248)",
-                }}
-              >
-                {saving ? "שומר..." : saveStatus === "saved" ? "✓ נשמר" : saveStatus === "error" ? "שגיאה" : "שמור שינויים"}
-              </button>
-            </div>
-          </section>
-        )}
-
-        {!lead.perplexity_research && !lead.hebrew_email_draft && (
-          <p style={{ fontWeight: 300, fontSize: "0.85rem", color: "rgba(255,255,255,0.25)", textAlign: "center", paddingTop: "2rem" }}>
-            הליד הזה עדיין לא עבר מחקר וכתיבת מייל.
-            <br />
-            ציון נדרש: 7+ להפעלת הפייפליין.
-          </p>
-        )}
-      </div>
-    </motion.div>
-  );
-}
-
 // ── Main Table ────────────────────────────────────────────────────────────────
 
 const COLUMNS: { key: SortKey; label: string }[] = [
-  { key: "company_name", label: "שם עסק" },
-  { key: "business_score", label: "ציון" },
-  { key: "ad_type", label: "סוג מודעה" },
-  { key: "niche", label: "ניישה" },
-  { key: "created_at", label: "תאריך" },
+  { key: "company_name",   label: "שם עסק"    },
+  { key: "business_score", label: "ציון"       },
+  { key: "ad_type",        label: "סוג מודעה"  },
+  { key: "niche",          label: "ניישה"      },
+  { key: "created_at",     label: "תאריך"      },
 ];
 
 export default function LeadsTable({ leads: initialLeads }: { leads: Lead[] }) {
@@ -520,11 +274,13 @@ export default function LeadsTable({ leads: initialLeads }: { leads: Lead[] }) {
   const router = useRouter();
 
   const adTypes = ["image", "video", "carousel"];
+  const niches = useMemo(() => [...new Set(leads.map((l) => l.niche).filter(Boolean))] as string[], [leads]);
 
   const activeFilterCount = useMemo(() => {
     let n = 0;
     if (filters.tier !== "all") n++;
     if (filters.adType.length) n++;
+    if (filters.niche.length) n++;
     if (filters.hasEmail !== "all") n++;
     if (filters.lemlist !== "all") n++;
     if (filters.minScore > 0) n++;
@@ -540,6 +296,7 @@ export default function LeadsTable({ leads: initialLeads }: { leads: Lead[] }) {
       if (filters.tier !== "all" && l.lead_quality !== filters.tier) return false;
       if (filters.minScore > 0 && (l.business_score ?? 0) < filters.minScore) return false;
       if (filters.adType.length && !filters.adType.includes(l.ad_type ?? "")) return false;
+      if (filters.niche.length && !filters.niche.includes(l.niche ?? "")) return false;
       if (filters.hasEmail === "yes" && !l.email_address) return false;
       if (filters.hasEmail === "no" && l.email_address) return false;
       if (filters.lemlist === "sent" && l.lemlist_status !== "sent") return false;
@@ -594,7 +351,6 @@ export default function LeadsTable({ leads: initialLeads }: { leads: Lead[] }) {
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Toolbar */}
         <div className="flex items-center gap-3 px-6 py-4 border-b border-white/[0.06] flex-wrap" dir="rtl">
-          {/* Search */}
           <input
             type="text"
             placeholder="חיפוש לפי שם עסק..."
@@ -605,7 +361,6 @@ export default function LeadsTable({ leads: initialLeads }: { leads: Lead[] }) {
             dir="rtl"
           />
 
-          {/* Filter button */}
           <div className="relative">
             <button
               onClick={() => setFilterOpen((v) => !v)}
@@ -634,12 +389,12 @@ export default function LeadsTable({ leads: initialLeads }: { leads: Lead[] }) {
                   onChange={setFilters}
                   onClose={() => setFilterOpen(false)}
                   adTypes={adTypes}
+                  niches={niches}
                 />
               )}
             </AnimatePresence>
           </div>
 
-          {/* Result count */}
           <span style={{ fontWeight: 300, fontSize: "0.8rem", color: "rgba(255,255,255,0.25)", marginRight: "auto" }}>
             {processed.length} / {leads.length} לידים
           </span>
@@ -757,7 +512,16 @@ export default function LeadsTable({ leads: initialLeads }: { leads: Lead[] }) {
 
       {/* Slide-in panel */}
       <AnimatePresence>
-        {selected && <LeadPanel lead={selected} onClose={() => setSelected(null)} />}
+        {selected && (
+          <LeadPanel
+            lead={selected}
+            onClose={() => setSelected(null)}
+            onEmailGenerated={(id, draft) => {
+              setLeads((prev) => prev.map((l) => l.id === id ? { ...l, hebrew_email_draft: draft } : l));
+              setSelected((prev) => prev?.id === id ? { ...prev, hebrew_email_draft: draft } : prev);
+            }}
+          />
+        )}
       </AnimatePresence>
     </div>
   );

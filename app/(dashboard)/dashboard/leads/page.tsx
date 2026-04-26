@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import LeadsTable from "@/components/leads-table";
+import LeadsViewToggle from "@/components/leads-view-toggle";
 import RunSearch from "@/components/run-search";
 
 export const dynamic = "force-dynamic";
@@ -31,15 +31,14 @@ export default async function LeadsPage() {
         <div>
           <h1 style={{ fontWeight: 800, fontSize: "1.5rem", color: "#fff" }}>לידים</h1>
           <p style={{ fontWeight: 300, fontSize: "0.82rem", color: "rgba(255,255,255,0.35)", marginTop: "2px" }}>
-            {leads?.length ?? 0} לידים במערכת · לחץ על שורה לצפייה בפרטים המלאים
+            {leads?.length ?? 0} לידים במערכת · לחץ על כרטיס או שורה לצפייה בפרטים
           </p>
         </div>
         <RunSearch />
       </div>
 
-      {/* Table with panel */}
       <div className="flex-1 overflow-hidden">
-        <LeadsTable leads={leads ?? []} />
+        <LeadsViewToggle leads={leads ?? []} />
       </div>
     </div>
   );
