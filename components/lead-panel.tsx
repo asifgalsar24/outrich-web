@@ -43,7 +43,7 @@ export function ScoreBadge({ score, tier }: { score: number | null; tier: string
 }
 
 export function AdTypeBadge({ type }: { type: string | null }) {
-  const map: Record<string, string> = { video: "וידאו", carousel: "קרוסל", image: "תמונה" };
+  const map: Record<string, string> = { video: "וידאו", carousel: "קרוסלה", image: "תמונה" };
   return (
     <span
       className="rounded-md px-2 py-0.5"

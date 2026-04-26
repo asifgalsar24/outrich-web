@@ -74,7 +74,7 @@ function FilterPanel({
     return () => document.removeEventListener("mousedown", handleClick);
   }, [onClose]);
 
-  const adTypeLabels: Record<string, string> = { video: "וידאו", carousel: "קרוסל", image: "תמונה" };
+  const adTypeLabels: Record<string, string> = { video: "וידאו", carousel: "קרוסלה", image: "תמונה" };
 
   function toggleAdType(t: string) {
     const next = filters.adType.includes(t) ? filters.adType.filter((x) => x !== t) : [...filters.adType, t];
@@ -263,14 +263,17 @@ const COLUMNS: { key: SortKey; label: string }[] = [
 ];
 
 export default function LeadsTable({ leads: initialLeads }: { leads: Lead[] }) {
-  const [leads, setLeads]           = useState<Lead[]>(initialLeads);
-  const [selected, setSelected]     = useState<Lead | null>(null);
-  const [search, setSearch]         = useState("");
-  const [filters, setFilters]       = useState<Filters>(DEFAULT_FILTERS);
-  const [filterOpen, setFilterOpen] = useState(false);
-  const [sort, setSort]             = useState<{ key: SortKey; dir: SortDir }>({ key: "business_score", dir: "desc" });
-  const [confirmId, setConfirmId]   = useState<string | null>(null);
-  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [leads, setLeads]               = useState<Lead[]>(initialLeads);
+  const [selected, setSelected]         = useState<Lead | null>(null);
+  const [search, setSearch]             = useState("");
+  const [filters, setFilters]           = useState<Filters>(DEFAULT_FILTERS);
+  const [filterOpen, setFilterOpen]     = useState(false);
+  const [sort, setSort]                 = useState<{ key: SortKey; dir: SortDir }>({ key: "business_score", dir: "desc" });
+  const [confirmId, setConfirmId]       = useState<string | null>(null);
+  const [deletingId, setDeletingId]     = useState<string | null>(null);
+  const [checkedIds, setCheckedIds]     = useState<Set<string>>(new Set());
+  const [bulkConfirm, setBulkConfirm]   = useState(false);
+  const [bulkLoading, setBulkLoading]   = useState(false);
   const router = useRouter();
 
   const adTypes = ["image", "video", "carousel"];
@@ -322,6 +325,41 @@ export default function LeadsTable({ leads: initialLeads }: { leads: Lead[] }) {
         ? { key, dir: prev.dir === "asc" ? "desc" : "asc" }
         : { key, dir: key === "business_score" ? "desc" : "asc" }
     );
+  }
+
+  function toggleCheck(id: string, e: React.MouseEvent) {
+    e.stopPropagation();
+    setBulkConfirm(false);
+    setCheckedIds((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  }
+
+  function toggleAll() {
+    setBulkConfirm(false);
+    if (checkedIds.size === processed.length) {
+      setCheckedIds(new Set());
+    } else {
+      setCheckedIds(new Set(processed.map((l) => l.id)));
+    }
+  }
+
+  async function handleBulkAction(action: "delete" | "archive") {
+    setBulkLoading(true);
+    const ids = [...checkedIds];
+    await fetch("/api/leads/bulk", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ids, action }),
+    });
+    setLeads((prev) => prev.filter((l) => !ids.includes(l.id)));
+    if (selected && ids.includes(selected.id)) setSelected(null);
+    setCheckedIds(new Set());
+    setBulkConfirm(false);
+    setBulkLoading(false);
+    router.refresh();
   }
 
   async function handleDelete(id: string) {
@@ -405,6 +443,16 @@ export default function LeadsTable({ leads: initialLeads }: { leads: Lead[] }) {
           <table className="w-full border-collapse" dir="rtl">
             <thead>
               <tr className="border-b border-white/[0.06]">
+                {/* Select-all checkbox */}
+                <th className="px-4 py-3 w-8" onClick={(e) => e.stopPropagation()}>
+                  <input
+                    type="checkbox"
+                    checked={processed.length > 0 && checkedIds.size === processed.length}
+                    ref={(el) => { if (el) el.indeterminate = checkedIds.size > 0 && checkedIds.size < processed.length; }}
+                    onChange={toggleAll}
+                    className="accent-indigo-500 w-3.5 h-3.5 cursor-pointer"
+                  />
+                </th>
                 {COLUMNS.map(({ key, label }) => (
                   <th
                     key={key}
@@ -443,10 +491,19 @@ export default function LeadsTable({ leads: initialLeads }: { leads: Lead[] }) {
                     key={lead.id}
                     onClick={() => setSelected(isSelected ? null : lead)}
                     className="group border-b border-white/[0.04] cursor-pointer transition-all duration-150"
-                    style={{ background: isSelected ? "rgba(99,102,241,0.08)" : "transparent" }}
-                    onMouseEnter={(e) => { if (!isSelected) (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.03)"; }}
-                    onMouseLeave={(e) => { if (!isSelected) (e.currentTarget as HTMLElement).style.background = "transparent"; }}
+                    style={{ background: checkedIds.has(lead.id) ? "rgba(99,102,241,0.06)" : isSelected ? "rgba(99,102,241,0.08)" : "transparent" }}
+                    onMouseEnter={(e) => { if (!isSelected && !checkedIds.has(lead.id)) (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.03)"; }}
+                    onMouseLeave={(e) => { if (!isSelected && !checkedIds.has(lead.id)) (e.currentTarget as HTMLElement).style.background = "transparent"; }}
                   >
+                    {/* Row checkbox */}
+                    <td className="px-4 py-3.5" onClick={(e) => toggleCheck(lead.id, e)}>
+                      <input
+                        type="checkbox"
+                        checked={checkedIds.has(lead.id)}
+                        onChange={() => {}}
+                        className="accent-indigo-500 w-3.5 h-3.5 cursor-pointer"
+                      />
+                    </td>
                     <td className="px-5 py-3.5">
                       <span style={{ fontWeight: 700, fontSize: "0.9rem", color: "#fff" }}>{lead.company_name}</span>
                     </td>
@@ -509,6 +566,97 @@ export default function LeadsTable({ leads: initialLeads }: { leads: Lead[] }) {
           </table>
         </div>
       </div>
+
+      {/* Bulk action bar */}
+      <AnimatePresence>
+        {checkedIds.size > 0 && (
+          <motion.div
+            initial={{ y: 80, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 80, opacity: 0 }}
+            transition={{ type: "spring", damping: 26, stiffness: 300 }}
+            className="fixed bottom-6 left-1/2 z-50 flex items-center gap-3 px-5 py-3 rounded-2xl"
+            style={{
+              transform: "translateX(-50%)",
+              background: "#111",
+              border: "1px solid rgba(255,255,255,0.12)",
+              boxShadow: "0 16px 48px rgba(0,0,0,0.7)",
+              fontFamily: F,
+            }}
+            dir="rtl"
+          >
+            <span style={{ fontWeight: 700, fontSize: "0.85rem", color: "rgba(255,255,255,0.7)" }}>
+              {checkedIds.size} נבחרו
+            </span>
+            <div style={{ width: "1px", height: "20px", background: "rgba(255,255,255,0.1)" }} />
+
+            {/* Archive */}
+            <button
+              onClick={() => handleBulkAction("archive")}
+              disabled={bulkLoading}
+              className="rounded-xl px-4 py-1.5 transition-all disabled:opacity-40"
+              style={{
+                fontWeight: 600, fontSize: "0.82rem",
+                background: "rgba(250,204,21,0.1)",
+                border: "1px solid rgba(250,204,21,0.25)",
+                color: "rgb(250,204,21)",
+              }}
+            >
+              {bulkLoading ? "..." : "📦 ארכיון"}
+            </button>
+
+            {/* Delete with confirm */}
+            {!bulkConfirm ? (
+              <button
+                onClick={() => setBulkConfirm(true)}
+                disabled={bulkLoading}
+                className="rounded-xl px-4 py-1.5 transition-all disabled:opacity-40"
+                style={{
+                  fontWeight: 600, fontSize: "0.82rem",
+                  background: "rgba(239,68,68,0.1)",
+                  border: "1px solid rgba(239,68,68,0.25)",
+                  color: "rgb(248,113,113)",
+                }}
+              >
+                🗑 מחק
+              </button>
+            ) : (
+              <div className="flex items-center gap-2">
+                <span style={{ fontSize: "0.8rem", color: "rgba(255,255,255,0.5)" }}>בטוח?</span>
+                <button
+                  onClick={() => handleBulkAction("delete")}
+                  disabled={bulkLoading}
+                  className="rounded-xl px-3 py-1.5 transition-all disabled:opacity-40"
+                  style={{
+                    fontWeight: 700, fontSize: "0.82rem",
+                    background: "rgba(239,68,68,0.2)",
+                    border: "1px solid rgba(239,68,68,0.4)",
+                    color: "rgb(248,113,113)",
+                  }}
+                >
+                  {bulkLoading ? "..." : "כן, מחק"}
+                </button>
+                <button
+                  onClick={() => setBulkConfirm(false)}
+                  className="rounded-xl px-3 py-1.5 transition-all hover:bg-white/[0.06]"
+                  style={{ fontWeight: 400, fontSize: "0.82rem", color: "rgba(255,255,255,0.35)" }}
+                >
+                  ביטול
+                </button>
+              </div>
+            )}
+
+            {/* Clear selection */}
+            <button
+              onClick={() => { setCheckedIds(new Set()); setBulkConfirm(false); }}
+              className="rounded-lg p-1 hover:bg-white/[0.07] transition-colors"
+              style={{ color: "rgba(255,255,255,0.3)", fontSize: "0.9rem", lineHeight: 1 }}
+            >
+              ✕
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Slide-in panel */}
       <AnimatePresence>

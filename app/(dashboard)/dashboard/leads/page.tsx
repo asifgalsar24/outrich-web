@@ -12,6 +12,7 @@ export default async function LeadsPage() {
   const { data: leads, error } = await supabase
     .from("leads")
     .select("*")
+    .neq("archived", true)
     .order("created_at", { ascending: false });
 
   if (error) {

@@ -22,4 +22,5 @@ export type Lead = {
   active_ads_count: number | null;
   created_at: string;
   crm_status: CrmStatus;
+  archived?: boolean;
 };

@@ -17,7 +17,7 @@ const SCORING_SIGNALS = [
     description: "מודעת וידאו = כבר משקיע בתוכן, צריך שדרוג",
     tiers: [
       { label: "וידאו", points: "+3", strength: 1.0, color: "rgb(74,222,128)" },
-      { label: "קרוסל / תמונה", points: "0", strength: 0.15, color: "rgba(255,255,255,0.2)" },
+      { label: "קרוסלה / תמונה", points: "0", strength: 0.15, color: "rgba(255,255,255,0.2)" },
     ],
   },
   {
