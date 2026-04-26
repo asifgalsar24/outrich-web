@@ -91,22 +91,31 @@ export default function LeadPanel({
   onStatusChange?: (id: string, status: CrmStatus) => void;
 }) {
   const [emailText, setEmailText]   = useState(lead.hebrew_email_draft ?? "");
+  const [savedText, setSavedText]   = useState(lead.hebrew_email_draft ?? "");
   const [saving, setSaving]         = useState(false);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saved" | "error">("idle");
   const [generating, setGenerating] = useState(false);
-  const isDirty = emailText !== (lead.hebrew_email_draft ?? "");
+  const [generateError, setGenerateError] = useState("");
+  const isDirty = emailText !== savedText;
 
   async function handleGenerateEmail() {
     setGenerating(true);
+    setGenerateError("");
     try {
       const res = await fetch(`/api/leads/${lead.id}/write-email`, { method: "POST" });
       if (res.ok) {
         const data = await res.json();
         const draft = data.hebrew_email_draft ?? "";
         setEmailText(draft);
+        setSavedText(draft);
         onEmailGenerated?.(lead.id, draft);
+      } else {
+        const err = await res.json().catch(() => ({}));
+        setGenerateError(err.error || `שגיאה (${res.status})`);
       }
-    } catch { /* ignore */ }
+    } catch {
+      setGenerateError("שגיאת רשת — נסה שוב");
+    }
     setGenerating(false);
   }
 
@@ -118,7 +127,13 @@ export default function LeadPanel({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ hebrew_email_draft: emailText }),
       });
-      setSaveStatus(res.ok ? "saved" : "error");
+      if (res.ok) {
+        setSaveStatus("saved");
+        setSavedText(emailText);
+        onEmailGenerated?.(lead.id, emailText);
+      } else {
+        setSaveStatus("error");
+      }
     } catch {
       setSaveStatus("error");
     }
@@ -289,6 +304,11 @@ export default function LeadPanel({
             >
               {generating ? "✍️ כותב מייל..." : "✨ צור מסר אישי"}
             </button>
+          )}
+          {generateError && (
+            <p style={{ fontSize: "0.78rem", color: "rgb(248,113,113)", marginBottom: "0.5rem" }}>
+              ⚠️ {generateError}
+            </p>
           )}
 
           <textarea

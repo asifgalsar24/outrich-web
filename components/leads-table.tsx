@@ -262,7 +262,7 @@ const COLUMNS: { key: SortKey; label: string }[] = [
   { key: "created_at",     label: "תאריך"      },
 ];
 
-export default function LeadsTable({ leads: initialLeads }: { leads: Lead[] }) {
+export default function LeadsTable({ leads: initialLeads, mode = "active" }: { leads: Lead[]; mode?: "active" | "archive" }) {
   const [leads, setLeads]               = useState<Lead[]>(initialLeads);
   const [selected, setSelected]         = useState<Lead | null>(null);
   const [search, setSearch]             = useState("");
@@ -590,19 +590,19 @@ export default function LeadsTable({ leads: initialLeads }: { leads: Lead[] }) {
             </span>
             <div style={{ width: "1px", height: "20px", background: "rgba(255,255,255,0.1)" }} />
 
-            {/* Archive */}
+            {/* Archive / Restore */}
             <button
-              onClick={() => handleBulkAction("archive")}
+              onClick={() => handleBulkAction(mode === "archive" ? "restore" : "archive")}
               disabled={bulkLoading}
               className="rounded-xl px-4 py-1.5 transition-all disabled:opacity-40"
               style={{
                 fontWeight: 600, fontSize: "0.82rem",
-                background: "rgba(250,204,21,0.1)",
-                border: "1px solid rgba(250,204,21,0.25)",
-                color: "rgb(250,204,21)",
+                background: mode === "archive" ? "rgba(74,222,128,0.1)" : "rgba(250,204,21,0.1)",
+                border: mode === "archive" ? "1px solid rgba(74,222,128,0.25)" : "1px solid rgba(250,204,21,0.25)",
+                color: mode === "archive" ? "rgb(74,222,128)" : "rgb(250,204,21)",
               }}
             >
-              {bulkLoading ? "..." : "📦 ארכיון"}
+              {bulkLoading ? "..." : mode === "archive" ? "↩️ שחזר" : "📦 ארכיון"}
             </button>
 
             {/* Delete with confirm */}

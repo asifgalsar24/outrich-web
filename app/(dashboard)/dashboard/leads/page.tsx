@@ -9,11 +9,10 @@ const F = "var(--font-osh), sans-serif";
 export default async function LeadsPage() {
   const supabase = await createClient();
 
-  const { data: leads, error } = await supabase
-    .from("leads")
-    .select("*")
-    .neq("archived", true)
-    .order("created_at", { ascending: false });
+  const [{ data: leads, error }, { data: archivedLeads }] = await Promise.all([
+    supabase.from("leads").select("*").neq("archived", true).order("created_at", { ascending: false }),
+    supabase.from("leads").select("*").eq("archived", true).order("created_at", { ascending: false }),
+  ]);
 
   if (error) {
     return (
@@ -39,7 +38,7 @@ export default async function LeadsPage() {
       </div>
 
       <div className="flex-1 overflow-hidden">
-        <LeadsViewToggle leads={leads ?? []} />
+        <LeadsViewToggle leads={leads ?? []} archivedLeads={archivedLeads ?? []} />
       </div>
     </div>
   );
