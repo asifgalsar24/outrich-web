@@ -148,8 +148,8 @@ export default function LeadPanel({
       animate={{ x: 0, opacity: 1 }}
       exit={{ x: "-100%", opacity: 0 }}
       transition={{ type: "spring", damping: 28, stiffness: 280 }}
-      className="fixed top-0 right-56 bottom-0 z-40 flex flex-col overflow-hidden"
-      style={{ width: "min(520px, 42vw)", background: "#0d0d0d", borderLeft: "1px solid rgba(255,255,255,0.07)" }}
+      className="fixed top-0 right-0 bottom-0 z-40 flex flex-col overflow-hidden w-full md:right-56 md:w-[min(520px,42vw)]"
+      style={{ background: "#0d0d0d", borderLeft: "1px solid rgba(255,255,255,0.07)" }}
       dir="rtl"
     >
       {/* Header */}

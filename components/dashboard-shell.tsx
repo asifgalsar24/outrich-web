@@ -38,8 +38,8 @@ export default function DashboardShell({
       style={{ fontFamily: F }}
       dir="rtl"
     >
-      {/* ── Sidebar ─────────────────────────────────────── */}
-      <aside className="flex flex-col w-56 shrink-0 border-l border-white/[0.07] bg-[#0d0d0d]">
+      {/* ── Sidebar (desktop only) ───────────────────────── */}
+      <aside className="hidden md:flex flex-col w-56 shrink-0 border-l border-white/[0.07] bg-[#0d0d0d]">
         {/* Brand */}
         <div className="px-5 py-6 border-b border-white/[0.06]">
           <p style={{ fontWeight: 800, fontSize: "1.2rem", color: "#fff" }}>OutRich</p>
@@ -101,9 +101,43 @@ export default function DashboardShell({
       </aside>
 
       {/* ── Main ────────────────────────────────────────── */}
-      <main className="flex-1 overflow-auto">
+      <main className="flex-1 overflow-auto pb-16 md:pb-0">
         {children}
       </main>
+
+      {/* ── Bottom nav (mobile only) ─────────────────────── */}
+      <nav
+        className="md:hidden fixed bottom-0 inset-x-0 z-50 flex items-center justify-around border-t border-white/[0.07] bg-[#0d0d0d]"
+        style={{ height: "60px", fontFamily: F }}
+        dir="rtl"
+      >
+        {navItems.map((item) => {
+          const active = pathname === item.href;
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              className="flex flex-col items-center justify-center gap-0.5 flex-1 h-full transition-colors"
+              style={{
+                color: active ? "rgb(129,140,248)" : "rgba(255,255,255,0.3)",
+                background: active ? "rgba(99,102,241,0.07)" : "transparent",
+              }}
+            >
+              <span style={{ fontSize: "1rem" }}>{item.icon}</span>
+              <span style={{ fontSize: "0.65rem", fontWeight: active ? 700 : 400 }}>{item.label}</span>
+            </Link>
+          );
+        })}
+        <button
+          onClick={signOut}
+          disabled={signingOut}
+          className="flex flex-col items-center justify-center gap-0.5 flex-1 h-full transition-colors"
+          style={{ color: "rgba(255,255,255,0.25)", background: "transparent" }}
+        >
+          <span style={{ fontSize: "1rem" }}>⏻</span>
+          <span style={{ fontSize: "0.65rem", fontWeight: 400 }}>{signingOut ? "..." : "יציאה"}</span>
+        </button>
+      </nav>
     </div>
   );
 }

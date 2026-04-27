@@ -395,7 +395,7 @@ export default function LeadsTable({ leads: initialLeads, mode = "active" }: { l
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="rounded-xl border border-white/[0.1] bg-white/[0.04] px-4 py-2 text-white placeholder:text-white/20 outline-none focus:border-indigo-500/50 transition-all"
-            style={{ fontFamily: F, fontWeight: 300, fontSize: "0.88rem", width: "220px" }}
+            style={{ fontFamily: F, fontWeight: 300, fontSize: "0.88rem", width: "clamp(140px, 40vw, 220px)" }}
             dir="rtl"
           />
 
@@ -440,7 +440,7 @@ export default function LeadsTable({ leads: initialLeads, mode = "active" }: { l
 
         {/* Table */}
         <div className="flex-1 overflow-auto">
-          <table className="w-full border-collapse" dir="rtl">
+          <table className="w-full min-w-[700px] border-collapse" dir="rtl">
             <thead>
               <tr className="border-b border-white/[0.06]">
                 {/* Select-all checkbox */}
