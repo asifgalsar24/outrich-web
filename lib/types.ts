@@ -20,6 +20,7 @@ export type Lead = {
   ad_url: string | null;
   page_followers: number | null;
   active_ads_count: number | null;
+  ad_copy: string | null;
   created_at: string;
   crm_status: CrmStatus;
   archived?: boolean;
