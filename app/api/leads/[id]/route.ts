@@ -7,7 +7,9 @@ export async function DELETE(
 ) {
   const { id } = await params;
   const supabase = await createClient();
-  const { error } = await supabase.from("leads").delete().eq("id", id);
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return Response.json({ error: "unauthorized" }, { status: 401 });
+  const { error } = await supabase.from("leads").delete().eq("id", id).eq("client_id", user.id);
   if (error) return Response.json({ error: error.message }, { status: 500 });
   return Response.json({ ok: true });
 }
@@ -19,10 +21,13 @@ export async function PATCH(
   const { id } = await params;
   const body = await request.json();
   const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return Response.json({ error: "unauthorized" }, { status: 401 });
   const { data, error } = await supabase
     .from("leads")
     .update(body)
     .eq("id", id)
+    .eq("client_id", user.id)
     .select("id");
   if (error) return Response.json({ error: error.message }, { status: 500 });
   if (!data || data.length === 0)

@@ -8,10 +8,11 @@ const F = "var(--font-osh), sans-serif";
 
 export default async function LeadsPage() {
   const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
 
   const [{ data: leads, error }, { data: archivedLeads }] = await Promise.all([
-    supabase.from("leads").select("*").neq("archived", true).order("created_at", { ascending: false }),
-    supabase.from("leads").select("*").eq("archived", true).order("created_at", { ascending: false }),
+    supabase.from("leads").select("*").eq("client_id", user?.id).neq("archived", true).order("created_at", { ascending: false }),
+    supabase.from("leads").select("*").eq("client_id", user?.id).eq("archived", true).order("created_at", { ascending: false }),
   ]);
 
   if (error) {
