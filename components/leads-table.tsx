@@ -264,6 +264,7 @@ const COLUMNS: { key: SortKey; label: string }[] = [
 
 export default function LeadsTable({ leads: initialLeads, mode = "active" }: { leads: Lead[]; mode?: "active" | "archive" }) {
   const [leads, setLeads]               = useState<Lead[]>(initialLeads);
+  useEffect(() => { setLeads(initialLeads); }, [initialLeads]);
   const [selected, setSelected]         = useState<Lead | null>(null);
   const [search, setSearch]             = useState("");
   const [filters, setFilters]           = useState<Filters>(DEFAULT_FILTERS);
