@@ -21,6 +21,14 @@ export type Lead = {
   page_followers: number | null;
   active_ads_count: number | null;
   ad_copy: string | null;
+  video_count: number | null;
+  image_count: number | null;
+  carousel_count: number | null;
+  oldest_ad_url: string | null;
+  oldest_ad_date: string | null;
+  instagram_page: string | null;
+  instagram_followers: number | null;
+  ad_start_date: string | null;
   created_at: string;
   crm_status: CrmStatus;
   archived?: boolean;

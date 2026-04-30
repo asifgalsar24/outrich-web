@@ -162,11 +162,19 @@ export default function LeadPanel({
             <ScoreBadge score={lead.business_score} tier={lead.lead_quality} />
             {lead.ad_type && <AdTypeBadge type={lead.ad_type} />}
           </div>
-          <div className="flex items-center gap-4 mt-1" style={{ fontSize: "0.78rem", color: "rgba(255,255,255,0.3)" }}>
-            {lead.active_ads_count != null && <span>📢 {lead.active_ads_count} מודעות פעילות</span>}
+          <div className="flex items-center gap-4 mt-1 flex-wrap" style={{ fontSize: "0.78rem", color: "rgba(255,255,255,0.3)" }}>
+            {lead.active_ads_count != null && <span>📢 {lead.active_ads_count} מודעות</span>}
             {lead.page_followers != null && <span>👥 {lead.page_followers.toLocaleString()} עוקבים</span>}
+            {lead.instagram_followers != null && <span>📸 {lead.instagram_followers.toLocaleString()} אינסטגרם</span>}
             <span>📅 {new Date(lead.created_at).toLocaleDateString("he-IL")}</span>
           </div>
+          {((lead.video_count ?? 0) > 0 || (lead.image_count ?? 0) > 0 || (lead.carousel_count ?? 0) > 0) && (
+            <div className="flex items-center gap-3 mt-1" style={{ fontSize: "0.78rem", color: "rgba(255,255,255,0.4)" }}>
+              {(lead.video_count ?? 0) > 0    && <span>🎬 {lead.video_count} וידאו</span>}
+              {(lead.image_count ?? 0) > 0    && <span>🖼 {lead.image_count} סטטיות</span>}
+              {(lead.carousel_count ?? 0) > 0 && <span>📂 {lead.carousel_count} קרוסלה</span>}
+            </div>
+          )}
         </div>
         <button
           onClick={onClose}
@@ -181,20 +189,6 @@ export default function LeadPanel({
 
         {/* Links */}
         <div className="flex flex-wrap gap-2">
-          {lead.website_url && (
-            <a href={lead.website_url} target="_blank" rel="noopener noreferrer"
-              className="rounded-lg px-3 py-1.5 transition-colors hover:bg-white/[0.08]"
-              style={{ fontWeight: 400, fontSize: "0.8rem", color: "rgb(129,140,248)", background: "rgba(99,102,241,0.08)", border: "1px solid rgba(99,102,241,0.2)" }}>
-              🌐 אתר
-            </a>
-          )}
-          {lead.facebook_page && (
-            <a href={lead.facebook_page} target="_blank" rel="noopener noreferrer"
-              className="rounded-lg px-3 py-1.5 transition-colors hover:bg-white/[0.08]"
-              style={{ fontWeight: 400, fontSize: "0.8rem", color: "rgb(129,140,248)", background: "rgba(99,102,241,0.08)", border: "1px solid rgba(99,102,241,0.2)" }}>
-              📱 פייסבוק
-            </a>
-          )}
           {lead.ad_url && (
             <a href={lead.ad_url} target="_blank" rel="noopener noreferrer"
               className="rounded-lg px-3 py-1.5 transition-colors hover:bg-white/[0.08]"
@@ -202,7 +196,55 @@ export default function LeadPanel({
               📢 מודעה
             </a>
           )}
+          {lead.facebook_page && (
+            <a href={lead.facebook_page} target="_blank" rel="noopener noreferrer"
+              className="rounded-lg px-3 py-1.5 transition-colors hover:bg-white/[0.08]"
+              style={{ fontWeight: 400, fontSize: "0.8rem", color: "rgb(129,140,248)", background: "rgba(99,102,241,0.08)", border: "1px solid rgba(99,102,241,0.2)" }}>
+              📘 פייסבוק
+            </a>
+          )}
+          {lead.instagram_page && (
+            <a href={lead.instagram_page} target="_blank" rel="noopener noreferrer"
+              className="rounded-lg px-3 py-1.5 transition-colors hover:bg-white/[0.08]"
+              style={{ fontWeight: 400, fontSize: "0.8rem", color: "rgb(129,140,248)", background: "rgba(99,102,241,0.08)", border: "1px solid rgba(99,102,241,0.2)" }}>
+              📸 אינסטגרם
+            </a>
+          )}
+          {lead.website_url && (
+            <a href={lead.website_url} target="_blank" rel="noopener noreferrer"
+              className="rounded-lg px-3 py-1.5 transition-colors hover:bg-white/[0.08]"
+              style={{ fontWeight: 400, fontSize: "0.8rem", color: "rgb(129,140,248)", background: "rgba(99,102,241,0.08)", border: "1px solid rgba(99,102,241,0.2)" }}>
+              🌐 אתר
+            </a>
+          )}
         </div>
+
+        {/* Ad copy */}
+        {lead.ad_copy && (
+          <section>
+            <p style={{ fontWeight: 700, fontSize: "0.78rem", color: "rgba(255,255,255,0.3)", letterSpacing: "0.1em" }} className="uppercase mb-3">
+              טקסט המודעה
+            </p>
+            <div className="rounded-xl p-4" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}>
+              <p style={{ fontWeight: 300, fontSize: "0.88rem", color: "rgba(255,255,255,0.6)", lineHeight: 1.75, whiteSpace: "pre-wrap" }}>
+                {lead.ad_copy}
+              </p>
+            </div>
+          </section>
+        )}
+
+        {/* Oldest ad */}
+        {lead.oldest_ad_date && (
+          <div className="flex items-center gap-3" style={{ fontSize: "0.8rem", color: "rgba(255,255,255,0.35)" }}>
+            <span>📅 מודעה ותיקה: {lead.oldest_ad_date}</span>
+            {lead.oldest_ad_url && (
+              <a href={lead.oldest_ad_url} target="_blank" rel="noopener noreferrer"
+                style={{ color: "rgb(129,140,248)", textDecoration: "none" }}>
+                ← צפה
+              </a>
+            )}
+          </div>
+        )}
 
         {/* CRM stage picker — only in board context */}
         {onStatusChange && (
@@ -231,7 +273,7 @@ export default function LeadPanel({
         )}
 
         {/* Claude analysis */}
-        {(lead.score_reasoning || lead.suggested_service || lead.outreach_angle) && (
+        {(lead.score_reasoning || lead.outreach_angle) && (
           <section>
             <p style={{ fontWeight: 700, fontSize: "0.78rem", color: "rgba(255,255,255,0.3)", letterSpacing: "0.1em" }} className="uppercase mb-3">
               ניתוח Claude
@@ -241,12 +283,6 @@ export default function LeadPanel({
                 <div className="rounded-xl p-4" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}>
                   <p style={{ fontWeight: 700, fontSize: "0.78rem", color: "rgba(255,255,255,0.35)", marginBottom: "0.4rem" }}>מה גרם לציון</p>
                   <p style={{ fontWeight: 300, fontSize: "0.88rem", color: "rgba(255,255,255,0.65)", lineHeight: 1.65 }}>{lead.score_reasoning}</p>
-                </div>
-              )}
-              {lead.suggested_service && (
-                <div className="rounded-xl p-4" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}>
-                  <p style={{ fontWeight: 700, fontSize: "0.78rem", color: "rgba(255,255,255,0.35)", marginBottom: "0.4rem" }}>שירות מומלץ</p>
-                  <p style={{ fontWeight: 300, fontSize: "0.88rem", color: "rgba(255,255,255,0.65)", lineHeight: 1.65 }}>{lead.suggested_service}</p>
                 </div>
               )}
               {lead.outreach_angle && (
