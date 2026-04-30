@@ -3,11 +3,41 @@
 :root {
   --background: #000000;
   --foreground: #ffffff;
+  --card: #0d0d0d;
+  --card-foreground: #ffffff;
+  --muted: #111111;
+  --muted-foreground: rgba(255, 255, 255, 0.4);
+  --border: rgba(255, 255, 255, 0.08);
+  --input: rgba(255, 255, 255, 0.06);
+  --primary: rgb(99, 102, 241);
+  --primary-foreground: #ffffff;
+  --secondary: rgba(255, 255, 255, 0.06);
+  --secondary-foreground: #ffffff;
+  --destructive: rgb(239, 68, 68);
+  --destructive-foreground: #ffffff;
+  --accent: rgba(255, 255, 255, 0.06);
+  --accent-foreground: #ffffff;
+  --ring: rgba(99, 102, 241, 0.5);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-ring: var(--ring);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
