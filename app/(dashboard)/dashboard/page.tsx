@@ -66,7 +66,7 @@ export default async function DashboardPage() {
   ];
 
   return (
-    <div className="p-8 max-w-5xl" style={{ fontFamily: F }} dir="rtl">
+    <div className="p-4 sm:p-8 max-w-5xl" style={{ fontFamily: F }} dir="rtl">
       <div className="mb-10">
         <h1 style={{ fontWeight: 800, fontSize: "1.8rem", color: "#fff" }}>סקירה כללית</h1>
         <p style={{ fontWeight: 300, fontSize: "0.9rem", color: "rgba(255,255,255,0.38)", marginTop: "0.3rem" }}>

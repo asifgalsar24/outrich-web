@@ -16,7 +16,7 @@ export default async function SettingsPage() {
   return (
     <div className="flex flex-col h-full" style={{ fontFamily: F }}>
       {/* Header */}
-      <div className="px-6 py-5 border-b border-white/[0.06]" dir="rtl">
+      <div className="px-4 sm:px-6 py-4 border-b border-white/[0.06]" dir="rtl">
         <h1 style={{ fontWeight: 800, fontSize: "1.5rem", color: "#fff" }}>הגדרות</h1>
         <p style={{ fontWeight: 300, fontSize: "0.82rem", color: "rgba(255,255,255,0.35)", marginTop: "2px" }}>
           פרופיל המותג שלך — כאן נבנה כל מייל שאנחנו כותבים עבורך

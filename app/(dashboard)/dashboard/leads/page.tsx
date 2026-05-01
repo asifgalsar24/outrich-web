@@ -28,11 +28,11 @@ export default async function LeadsPage() {
   return (
     <div className="flex flex-col h-full" style={{ fontFamily: F }}>
       {/* Header */}
-      <div className="flex items-center justify-between px-6 py-5 border-b border-white/[0.06]" dir="rtl">
-        <div>
-          <h1 style={{ fontWeight: 800, fontSize: "1.5rem", color: "#fff" }}>לידים</h1>
-          <p style={{ fontWeight: 300, fontSize: "0.82rem", color: "rgba(255,255,255,0.35)", marginTop: "2px" }}>
-            {leads?.length ?? 0} לידים במערכת · לחץ על כרטיס או שורה לצפייה בפרטים
+      <div className="flex items-center gap-3 justify-between px-4 sm:px-6 py-4 border-b border-white/[0.06]" dir="rtl">
+        <div className="min-w-0">
+          <h1 style={{ fontWeight: 800, fontSize: "1.3rem", color: "#fff" }}>לידים</h1>
+          <p className="truncate" style={{ fontWeight: 300, fontSize: "0.78rem", color: "rgba(255,255,255,0.35)", marginTop: "2px" }}>
+            {leads?.length ?? 0} לידים במערכת
           </p>
         </div>
         <RunSearch />

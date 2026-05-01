@@ -81,7 +81,7 @@ export default function SettingsForm({
   const hintStyle  = { fontWeight: 300, fontSize: "0.74rem", color: "rgba(255,255,255,0.25)", marginTop: "0.35rem" } as const;
 
   return (
-    <div className="max-w-2xl mx-auto px-6 py-8 flex flex-col gap-6" dir="rtl" style={{ fontFamily: F }}>
+    <div className="max-w-2xl mx-auto px-4 sm:px-6 py-6 flex flex-col gap-4 sm:gap-6" dir="rtl" style={{ fontFamily: F }}>
 
       {/* ── Section 1: Brand Info ───────────────────────────── */}
       <GlassEffect className="rounded-2xl">

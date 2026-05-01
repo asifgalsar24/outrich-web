@@ -65,7 +65,7 @@ export default function LandingPage() {
       style={{ fontFamily: F, fontWeight: 400 }}>
 
       {/* ── TOP NAV ───────────────────────────────────────── */}
-      <nav className="fixed top-0 inset-x-0 z-20 flex items-center justify-between px-8 py-5"
+      <nav className="fixed top-0 inset-x-0 z-20 flex items-center justify-between px-4 sm:px-8 py-5"
         style={{ fontFamily: F }}>
         <p style={{ fontWeight: 800, fontSize: "1.1rem", color: "#fff" }}>OutRich</p>
         <Link href="/login">
@@ -106,7 +106,7 @@ export default function LandingPage() {
             animate={{ opacity: 1, y: [24, -4, 0] }}
             transition={{ duration: 0.7, ease: [0.4, 0.0, 0.2, 1], delay: 0.1 }}
             style={{ fontFamily: F, fontWeight: 800, lineHeight: 1 }}
-            className="text-6xl md:text-8xl lg:text-[clamp(4rem,9vw,8rem)] tracking-tight"
+            className="text-[2rem] sm:text-5xl md:text-8xl lg:text-[clamp(4rem,9vw,8rem)] tracking-tight"
           >
             <span style={{ display: "block", marginBottom: "0.2em" }}>
               אנחנו מוצאים את הלידים.
@@ -121,8 +121,8 @@ export default function LandingPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.35 }}
-            style={{ fontWeight: 300, fontSize: "1.15rem", lineHeight: 1.7, color: "rgba(255,255,255,0.5)" }}
-            className="mt-7 max-w-2xl"
+            style={{ fontWeight: 300, lineHeight: 1.7, color: "rgba(255,255,255,0.5)" }}
+            className="mt-6 max-w-2xl text-base md:text-[1.15rem]"
           >
             אנחנו סורקים את ספריית המודעות של Meta, מנתחים כל עסק, וכותבים לו מייל קר מותאם אישית בעברית —
             הכל אוטומטי, הכל מוכן לשליחה.
@@ -188,7 +188,7 @@ export default function LandingPage() {
       </div>
 
       {/* ── PAIN POINT ───────────────────────────────────── */}
-      <section className="relative py-28 px-6 bg-black border-t border-white/5">
+      <section className="relative py-16 md:py-28 px-6 bg-black border-t border-white/5">
         <div className="max-w-3xl mx-auto text-center">
           <motion.p
             initial={{ opacity: 0, y: 16 }}
@@ -213,7 +213,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── HOW IT WORKS ─────────────────────────────────── */}
-      <section className="relative py-36 px-6 overflow-hidden bg-black">
+      <section className="relative py-20 md:py-36 px-6 overflow-hidden bg-black">
         <BGPattern variant="grid" mask="fade-edges" fill="#1a1a1a" size={44} />
 
         <div className="relative z-10 max-w-6xl mx-auto">
@@ -265,7 +265,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── FEATURES ──────────────────────────────────────── */}
-      <section className="relative py-36 px-6 bg-black">
+      <section className="relative py-20 md:py-36 px-6 bg-black">
         <BGPattern variant="dots" mask="fade-y" fill="#1e1e1e" size={28} />
 
         <div className="relative z-10 max-w-6xl mx-auto">
@@ -315,7 +315,7 @@ export default function LandingPage() {
 
       {/* ── STATS STRIP ───────────────────────────────────── */}
       <section className="relative py-24 px-6 border-t border-b border-white/[0.06] bg-black">
-        <div className="max-w-5xl mx-auto grid md:grid-cols-3 gap-12 text-center">
+        <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12 text-center">
           {[
             { prefix: "~3", stat: "דקות", label: "מהחיפוש הראשון ועד מייל מוכן לשליחה" },
             { prefix: "100%", stat: "אוטומטי", label: "סריקה, ניקוד, מחקר, כתיבה — הכל קורה לבד" },
@@ -342,7 +342,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── FINAL CTA ─────────────────────────────────────── */}
-      <section className="relative py-48 px-6 overflow-hidden bg-black">
+      <section className="relative py-24 md:py-48 px-6 overflow-hidden bg-black">
         <BGPattern variant="diagonal-stripes" mask="fade-edges" fill="#0f0f0f" size={32} />
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
           <div className="w-[700px] h-[350px] bg-indigo-600/10 rounded-full blur-[130px]" />

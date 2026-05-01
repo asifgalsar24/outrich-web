@@ -430,56 +430,84 @@ export default function LeadsTable({ leads: initialLeads, mode = "active" }: { l
 
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Header */}
-        <div className="flex items-center gap-3 px-5 py-4 border-b border-border" dir="rtl">
-          <div className="relative flex-1 max-w-[280px]">
-            <Search className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              placeholder="חיפוש לפי שם עסק..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pr-9 text-sm bg-white/[0.04] border-white/[0.1] focus-visible:ring-primary/30"
-              dir="rtl"
-            />
+        <div className="px-4 py-3 border-b border-border" dir="rtl">
+          {/* Primary row */}
+          <div className="flex items-center gap-2.5">
+            <div className="relative flex-1 sm:max-w-[280px]">
+              <Search className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                placeholder="חיפוש לפי שם עסק..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="pr-9 text-sm bg-white/[0.04] border-white/[0.1] focus-visible:ring-primary/30"
+                dir="rtl"
+              />
+            </div>
+
+            <Button
+              variant={showFilters ? "default" : "outline"} size="sm"
+              onClick={() => setShowFilters((v) => !v)}
+              className="relative gap-1.5 shrink-0"
+            >
+              <SlidersHorizontal className="h-4 w-4" />
+              <span className="hidden sm:inline">סינון</span>
+              {activeFilterCount > 0 && (
+                <Badge className="absolute -right-2 -top-2 h-5 w-5 flex items-center justify-center p-0 text-xs bg-destructive">
+                  {activeFilterCount}
+                </Badge>
+              )}
+            </Button>
+
+            {/* Sort + count — desktop */}
+            <div className="hidden sm:flex gap-1.5 mr-auto">
+              {([
+                { key: "business_score" as SortKey, label: "ציון" },
+                { key: "created_at" as SortKey, label: "תאריך" },
+                { key: "company_name" as SortKey, label: "שם" },
+              ]).map(({ key, label }) => (
+                <button key={key}
+                  onClick={() => setSort((p) => ({ key, dir: p.key === key ? (p.dir === "asc" ? "desc" : "asc") : (key === "business_score" ? "desc" : "asc") }))}
+                  className="rounded-lg px-2.5 py-1 text-xs transition-all"
+                  style={{
+                    fontWeight: sort.key === key ? 700 : 400, fontFamily: F,
+                    background: sort.key === key ? "rgba(99,102,241,0.15)" : "rgba(255,255,255,0.04)",
+                    border: sort.key === key ? "1px solid rgba(99,102,241,0.3)" : "1px solid rgba(255,255,255,0.08)",
+                    color: sort.key === key ? "rgb(129,140,248)" : "rgba(255,255,255,0.35)",
+                  }}>
+                  {sort.key === key ? (sort.dir === "asc" ? "↑" : "↓") : "↕"} {label}
+                </button>
+              ))}
+            </div>
+            <span className="hidden sm:inline text-xs text-muted-foreground shrink-0" style={{ fontFamily: F }}>
+              {processed.length} / {leads.length}
+            </span>
           </div>
 
-          <Button
-            variant={showFilters ? "default" : "outline"} size="sm"
-            onClick={() => setShowFilters((v) => !v)}
-            className="relative gap-1.5"
-          >
-            <SlidersHorizontal className="h-4 w-4" />
-            סינון
-            {activeFilterCount > 0 && (
-              <Badge className="absolute -right-2 -top-2 h-5 w-5 flex items-center justify-center p-0 text-xs bg-destructive">
-                {activeFilterCount}
-              </Badge>
-            )}
-          </Button>
-
-          {/* Sort */}
-          <div className="flex gap-1.5 mr-auto">
-            {([
-              { key: "business_score" as SortKey, label: "ציון" },
-              { key: "created_at" as SortKey, label: "תאריך" },
-              { key: "company_name" as SortKey, label: "שם" },
-            ]).map(({ key, label }) => (
-              <button key={key}
-                onClick={() => setSort((p) => ({ key, dir: p.key === key ? (p.dir === "asc" ? "desc" : "asc") : (key === "business_score" ? "desc" : "asc") }))}
-                className="rounded-lg px-2.5 py-1 text-xs transition-all"
-                style={{
-                  fontWeight: sort.key === key ? 700 : 400, fontFamily: F,
-                  background: sort.key === key ? "rgba(99,102,241,0.15)" : "rgba(255,255,255,0.04)",
-                  border: sort.key === key ? "1px solid rgba(99,102,241,0.3)" : "1px solid rgba(255,255,255,0.08)",
-                  color: sort.key === key ? "rgb(129,140,248)" : "rgba(255,255,255,0.35)",
-                }}>
-                {sort.key === key ? (sort.dir === "asc" ? "↑" : "↓") : "↕"} {label}
-              </button>
-            ))}
+          {/* Secondary row — mobile only */}
+          <div className="flex items-center justify-between mt-2.5 sm:hidden">
+            <div className="flex gap-1.5">
+              {([
+                { key: "business_score" as SortKey, label: "ציון" },
+                { key: "created_at" as SortKey, label: "תאריך" },
+                { key: "company_name" as SortKey, label: "שם" },
+              ]).map(({ key, label }) => (
+                <button key={key}
+                  onClick={() => setSort((p) => ({ key, dir: p.key === key ? (p.dir === "asc" ? "desc" : "asc") : (key === "business_score" ? "desc" : "asc") }))}
+                  className="rounded-lg px-2.5 py-1 text-xs transition-all"
+                  style={{
+                    fontWeight: sort.key === key ? 700 : 400, fontFamily: F,
+                    background: sort.key === key ? "rgba(99,102,241,0.15)" : "rgba(255,255,255,0.04)",
+                    border: sort.key === key ? "1px solid rgba(99,102,241,0.3)" : "1px solid rgba(255,255,255,0.08)",
+                    color: sort.key === key ? "rgb(129,140,248)" : "rgba(255,255,255,0.35)",
+                  }}>
+                  {sort.key === key ? (sort.dir === "asc" ? "↑" : "↓") : "↕"} {label}
+                </button>
+              ))}
+            </div>
+            <span className="text-xs text-muted-foreground" style={{ fontFamily: F }}>
+              {processed.length} / {leads.length}
+            </span>
           </div>
-
-          <span className="text-xs text-muted-foreground shrink-0" style={{ fontFamily: F }}>
-            {processed.length} / {leads.length}
-          </span>
         </div>
 
         {/* Rows */}
@@ -515,12 +543,38 @@ export default function LeadsTable({ leads: initialLeads, mode = "active" }: { l
         </div>
       </div>
 
-      {/* Side filter panel */}
+      {/* Filter — mobile: bottom sheet */}
+      <AnimatePresence>
+        {showFilters && (
+          <>
+            <motion.div
+              className="sm:hidden fixed inset-0 z-40 bg-black/60"
+              onClick={() => setShowFilters(false)}
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            />
+            <motion.div
+              className="sm:hidden fixed inset-x-0 bottom-0 z-50 overflow-hidden rounded-t-3xl"
+              style={{ background: "#111", border: "1px solid rgba(255,255,255,0.12)", maxHeight: "80vh" }}
+              initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
+              transition={{ type: "spring", damping: 26, stiffness: 280 }}
+            >
+              <div className="flex justify-center pt-3 pb-2 shrink-0">
+                <div className="w-10 h-1 rounded-full" style={{ background: "rgba(255,255,255,0.2)" }} />
+              </div>
+              <div className="overflow-y-auto" style={{ maxHeight: "calc(80vh - 28px)" }}>
+                <FilterPanel filters={filters} onChange={setFilters} niches={niches} />
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* Filter — desktop: side panel */}
       <AnimatePresence initial={false}>
         {showFilters && (
           <motion.div key="filters"
             initial={{ width: 0, opacity: 0 }} animate={{ width: 260, opacity: 1 }} exit={{ width: 0, opacity: 0 }}
-            transition={{ duration: 0.22 }} className="overflow-hidden shrink-0">
+            transition={{ duration: 0.22 }} className="hidden sm:block overflow-hidden shrink-0">
             <FilterPanel filters={filters} onChange={setFilters} niches={niches} />
           </motion.div>
         )}
@@ -532,7 +586,7 @@ export default function LeadsTable({ leads: initialLeads, mode = "active" }: { l
           <motion.div
             initial={{ y: 80, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 80, opacity: 0 }}
             transition={{ type: "spring", damping: 26, stiffness: 300 }}
-            className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 px-5 py-3 rounded-2xl"
+            className="fixed bottom-20 md:bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 px-5 py-3 rounded-2xl"
             style={{ background: "#111", border: "1px solid rgba(255,255,255,0.12)", boxShadow: "0 16px 48px rgba(0,0,0,0.7)", fontFamily: F }}
             dir="rtl"
           >
