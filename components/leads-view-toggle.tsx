@@ -27,7 +27,6 @@ export default function LeadsViewToggle({ leads, archivedLeads }: { leads: Lead[
               <li
                 key={key}
                 onClick={() => setView(key)}
-                style={{ "--gf": gf, "--gt": gt } as React.CSSProperties}
                 className={`relative h-[42px] rounded-full flex items-center justify-center cursor-pointer transition-all duration-300 border border-white/[0.08] overflow-hidden group ${
                   active ? "w-[110px]" : "w-[42px] hover:w-[110px]"
                 }`}
