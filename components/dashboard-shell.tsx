@@ -3,9 +3,38 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { motion } from "framer-motion";
 import { createClient } from "@/lib/supabase/client";
 import { GlassFilter } from "@/components/ui/liquid-glass";
 import type { User } from "@supabase/supabase-js";
+
+function AnimatedBackground() {
+  const orbs = [
+    { color: "rgba(99,102,241,0.2)",  size: 700, duration: 25, x: [-60, 80, -40] as number[], y: [-80, 60, -100] as number[] },
+    { color: "rgba(139,92,246,0.15)", size: 500, duration: 20, x: [80, -100, 60] as number[], y: [60, -80, 40]   as number[] },
+    { color: "rgba(34,211,238,0.10)", size: 400, duration: 32, x: [-40, 60, -80] as number[], y: [40, -60, 80]   as number[] },
+  ];
+  return (
+    <div className="fixed inset-0 overflow-hidden pointer-events-none" style={{ zIndex: 0 }}>
+      {orbs.map((orb, i) => (
+        <motion.div
+          key={i}
+          className="absolute rounded-full"
+          style={{
+            width: orb.size,
+            height: orb.size,
+            background: `radial-gradient(circle, ${orb.color}, transparent 70%)`,
+            top: `${20 + i * 25}%`,
+            left: `${10 + i * 28}%`,
+            filter: "blur(80px)",
+          }}
+          animate={{ x: orb.x, y: orb.y }}
+          transition={{ duration: orb.duration, repeat: Infinity, repeatType: "mirror", ease: "easeInOut" }}
+        />
+      ))}
+    </div>
+  );
+}
 
 const F = "var(--font-osh), sans-serif";
 
@@ -35,16 +64,13 @@ export default function DashboardShell({
 
   return (
     <div
-      className="flex h-screen text-white overflow-hidden"
-      style={{
-        fontFamily: F,
-        background:
-          "radial-gradient(ellipse at 25% 65%, rgba(99,102,241,0.12) 0%, transparent 50%), " +
-          "radial-gradient(ellipse at 75% 20%, rgba(139,92,246,0.08) 0%, transparent 50%), " +
-          "#080808",
-      }}
+      className="flex h-screen text-white overflow-hidden relative"
+      style={{ fontFamily: F, background: "#080808" }}
       dir="rtl"
     >
+      {/* Animated gradient orbs — make glass visible */}
+      <AnimatedBackground />
+
       {/* SVG filter for liquid glass distortion — render once for the whole app */}
       <GlassFilter />
 

@@ -106,9 +106,11 @@ export default function RunSearch() {
   return (
     <>
       {/* Trigger button */}
-      <button
+      <motion.button
         onClick={() => setOpen(true)}
-        className="flex items-center gap-2 rounded-xl px-4 py-2.5 transition-all hover:opacity-90"
+        whileHover={{ scale: 1.04, boxShadow: "0 0 20px rgba(99,102,241,0.4)" }}
+        whileTap={{ scale: 0.96 }}
+        className="flex items-center gap-2 rounded-xl px-4 py-2.5"
         style={{
           fontFamily: F, fontWeight: 700, fontSize: "0.9rem",
           background: "rgb(99,102,241)",
@@ -117,7 +119,7 @@ export default function RunSearch() {
       >
         <span style={{ fontSize: "1rem" }}>+</span>
         חיפוש חדש
-      </button>
+      </motion.button>
 
       {/* Modal */}
       <AnimatePresence>
@@ -136,10 +138,10 @@ export default function RunSearch() {
             {/* Panel */}
             <motion.div
               key="modal"
-              initial={{ opacity: 0, scale: 0.97, y: 8 }}
+              initial={{ opacity: 0, scale: 0.95, y: 16 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.97, y: 8 }}
-              transition={{ duration: 0.2 }}
+              exit={{ opacity: 0, scale: 0.95, y: 8 }}
+              transition={{ type: "spring", stiffness: 320, damping: 28 }}
               className="fixed z-50 inset-x-0 top-1/2 -translate-y-1/2 mx-auto flex flex-col"
               style={{
                 width: "min(560px, 90vw)",
@@ -202,10 +204,12 @@ export default function RunSearch() {
                       </p>
                       <div className="flex flex-wrap gap-2">
                         {QUICK_SEARCHES.map((q) => (
-                          <button
+                          <motion.button
                             key={q}
                             onClick={() => setKeyword(q)}
-                            className="rounded-lg px-3 py-1.5 transition-all hover:border-indigo-500/40"
+                            whileHover={{ scale: 1.06 }}
+                            whileTap={{ scale: 0.94 }}
+                            className="rounded-lg px-3 py-1.5"
                             style={{
                               fontFamily: F, fontWeight: 400, fontSize: "0.82rem",
                               background: keyword === q ? "rgba(99,102,241,0.15)" : "rgba(255,255,255,0.04)",
@@ -214,7 +218,7 @@ export default function RunSearch() {
                             }}
                           >
                             {q}
-                          </button>
+                          </motion.button>
                         ))}
                       </div>
                     </div>
@@ -226,10 +230,12 @@ export default function RunSearch() {
                       </label>
                       <div className="flex gap-2">
                         {MAX_LEADS_OPTIONS.map((n) => (
-                          <button
+                          <motion.button
                             key={n}
                             onClick={() => setMaxLeads(n)}
-                            className="flex-1 rounded-xl py-2.5 transition-all"
+                            whileHover={{ scale: 1.04 }}
+                            whileTap={{ scale: 0.96 }}
+                            className="flex-1 rounded-xl py-2.5"
                             style={{
                               fontFamily: F, fontWeight: maxLeads === n ? 700 : 400, fontSize: "0.9rem",
                               background: maxLeads === n ? "rgba(99,102,241,0.15)" : "rgba(255,255,255,0.04)",
@@ -238,7 +244,7 @@ export default function RunSearch() {
                             }}
                           >
                             {n}
-                          </button>
+                          </motion.button>
                         ))}
                       </div>
                     </div>
@@ -290,20 +296,24 @@ export default function RunSearch() {
               <div className="px-6 py-4 border-t border-white/[0.07] flex items-center justify-between gap-3">
                 {done ? (
                   <>
-                    <button
+                    <motion.button
                       onClick={() => { setOpen(false); router.push("/dashboard/leads"); }}
-                      className="flex-1 rounded-xl py-3 transition-colors"
+                      whileHover={{ scale: 1.02, boxShadow: "0 0 20px rgba(74,222,128,0.3)" }}
+                      whileTap={{ scale: 0.97 }}
+                      className="flex-1 rounded-xl py-3"
                       style={{ fontFamily: F, fontWeight: 700, fontSize: "0.95rem", background: "rgba(74,222,128,0.12)", border: "1px solid rgba(74,222,128,0.3)", color: "rgb(74,222,128)" }}
                     >
                       ראה לידים חדשים ←
-                    </button>
-                    <button
+                    </motion.button>
+                    <motion.button
                       onClick={reset}
-                      className="rounded-xl px-4 py-3 transition-colors hover:bg-white/[0.06]"
+                      whileHover={{ scale: 1.04 }}
+                      whileTap={{ scale: 0.96 }}
+                      className="rounded-xl px-4 py-3"
                       style={{ fontFamily: F, fontWeight: 400, fontSize: "0.85rem", color: "rgba(255,255,255,0.4)", border: "1px solid rgba(255,255,255,0.08)" }}
                     >
                       חיפוש נוסף
-                    </button>
+                    </motion.button>
                   </>
                 ) : running ? (
                   <p style={{ fontWeight: 300, fontSize: "0.82rem", color: "rgba(255,255,255,0.3)" }}>
@@ -311,21 +321,25 @@ export default function RunSearch() {
                   </p>
                 ) : (
                   <>
-                    <button
+                    <motion.button
                       onClick={handleRun}
                       disabled={!keyword.trim()}
-                      className="flex-1 rounded-xl py-3 transition-all disabled:opacity-40 disabled:cursor-not-allowed hover:opacity-90"
+                      whileHover={keyword.trim() ? { scale: 1.02, boxShadow: "0 0 24px rgba(99,102,241,0.5)" } : {}}
+                      whileTap={keyword.trim() ? { scale: 0.97 } : {}}
+                      className="flex-1 rounded-xl py-3 disabled:opacity-40 disabled:cursor-not-allowed"
                       style={{ fontFamily: F, fontWeight: 700, fontSize: "0.95rem", background: "rgb(99,102,241)", color: "#fff" }}
                     >
                       הפעל חיפוש
-                    </button>
-                    <button
+                    </motion.button>
+                    <motion.button
                       onClick={handleClose}
-                      className="rounded-xl px-4 py-3 transition-colors hover:bg-white/[0.06]"
+                      whileHover={{ scale: 1.04 }}
+                      whileTap={{ scale: 0.96 }}
+                      className="rounded-xl px-4 py-3"
                       style={{ fontFamily: F, fontWeight: 400, fontSize: "0.85rem", color: "rgba(255,255,255,0.4)", border: "1px solid rgba(255,255,255,0.08)" }}
                     >
                       ביטול
-                    </button>
+                    </motion.button>
                   </>
                 )}
               </div>

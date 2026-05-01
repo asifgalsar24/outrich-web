@@ -36,7 +36,13 @@ export function ScoreBadge({ score, tier }: { score: number | null; tier: string
       className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5"
       style={{ background: c.bg, border: `1px solid ${c.border}`, fontWeight: 700, fontSize: "0.78rem", color: c.text }}
     >
-      {tier === "hot" ? "🔥" : tier === "warm" ? "🌡" : "❄️"}
+      {tier === "hot" ? (
+        <motion.span
+          animate={{ scale: [1, 1.3, 1] }}
+          transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
+          style={{ display: "inline-block" }}
+        >🔥</motion.span>
+      ) : tier === "warm" ? "🌡" : "❄️"}
       {score ?? "—"}/10
     </span>
   );
@@ -327,9 +333,11 @@ export default function LeadPanel({
           </div>
 
           {!emailText && (
-            <button
+            <motion.button
               onClick={handleGenerateEmail}
               disabled={generating}
+              whileHover={!generating ? { scale: 1.02, boxShadow: "0 0 20px rgba(99,102,241,0.3)" } : {}}
+              whileTap={!generating ? { scale: 0.97 } : {}}
               className="w-full rounded-xl py-3 mb-3 transition-all disabled:opacity-60"
               style={{
                 fontFamily: F, fontWeight: 700, fontSize: "0.88rem",
@@ -339,7 +347,7 @@ export default function LeadPanel({
               }}
             >
               {generating ? "✍️ כותב מייל..." : "✨ צור מסר אישי"}
-            </button>
+            </motion.button>
           )}
           {generateError && (
             <p style={{ fontSize: "0.78rem", color: "rgb(248,113,113)", marginBottom: "0.5rem" }}>
@@ -379,9 +387,11 @@ export default function LeadPanel({
                   {generating ? "✍️..." : "↺ צור מחדש"}
                 </button>
               )}
-              <button
+              <motion.button
                 onClick={handleSaveEmail}
                 disabled={!isDirty || saving}
+                whileHover={isDirty && !saving ? { scale: 1.04, y: -1 } : {}}
+                whileTap={isDirty && !saving ? { scale: 0.96 } : {}}
                 className="rounded-xl px-4 py-2 transition-all disabled:opacity-40"
                 style={{
                   fontFamily: F, fontWeight: 700, fontSize: "0.82rem",
@@ -397,7 +407,7 @@ export default function LeadPanel({
                 }}
               >
                 {saving ? "שומר..." : saveStatus === "saved" ? "✓ נשמר" : saveStatus === "error" ? "שגיאה" : "שמור"}
-              </button>
+              </motion.button>
             </div>
 
             {emailText && (

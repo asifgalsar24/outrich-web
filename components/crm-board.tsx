@@ -24,6 +24,7 @@ function KanbanCard({
   onDragStart: (id: string) => void;
 }) {
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
 
   // Colored avatar circle using company initial
   const initial = lead.company_name?.[0]?.toUpperCase() ?? "?";
@@ -38,12 +39,15 @@ function KanbanCard({
     <motion.div
       layout
       initial={{ opacity: 0, x: 10, y: 15, rotate: 1 }}
-      animate={{ opacity: 1, x: 0, y: 0, rotate: 0 }}
+      animate={isDragging
+        ? { opacity: 0.85, x: 0, y: 0, rotate: 2, scale: 1.04 }
+        : { opacity: 1, x: 0, y: 0, rotate: 0, scale: 1 }}
       exit={{ opacity: 0, scale: 0.96 }}
+      whileHover={!isDragging ? { y: -2, boxShadow: "0 8px 28px rgba(99,102,241,0.2)" } : {}}
       transition={{ type: "spring", stiffness: 400, damping: 35, mass: 0.5 }}
       draggable
-      onDragStart={(e) => { onDragStart(lead.id); (e.target as HTMLElement).style.opacity = "0.5"; }}
-      onDragEnd={(e) => { (e.target as HTMLElement).style.opacity = "1"; }}
+      onDragStart={() => { setIsDragging(true); onDragStart(lead.id); }}
+      onDragEnd={() => setIsDragging(false)}
       className="flex items-center gap-3 py-3.5 border-b border-white/[0.05] last:border-0 cursor-grab active:cursor-grabbing select-none group/card"
       style={{ fontFamily: F }}
       dir="rtl"

@@ -58,3 +58,14 @@ body {
   from { background-position: 0% 0%; }
   to   { background-position: 0% -1000%; }
 }
+
+@keyframes shimmer {
+  from { transform: translateX(100%) skewX(-12deg); }
+  to   { transform: translateX(-200%) skewX(-12deg); }
+}
+
+@keyframes orbFloat {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33%       { transform: translate(40px, -60px) scale(1.08); }
+  66%       { transform: translate(-30px, 30px) scale(0.95); }
+}

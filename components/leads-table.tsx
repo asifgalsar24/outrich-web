@@ -171,7 +171,9 @@ function LeadRow({
     <>
       <motion.div
         onClick={onToggle}
-        className="w-full px-5 py-3.5 text-right transition-colors hover:bg-white/[0.025] cursor-pointer border-b border-white/[0.04]"
+        whileHover={{ backgroundColor: checked ? "rgba(99,102,241,0.09)" : "rgba(99,102,241,0.05)" }}
+        transition={{ duration: 0.15 }}
+        className="w-full px-5 py-3.5 text-right cursor-pointer border-b border-white/[0.04]"
         style={{ background: checked ? "rgba(99,102,241,0.06)" : expanded ? "rgba(99,102,241,0.04)" : "transparent" }}
         dir="rtl"
       >
@@ -324,12 +326,14 @@ function LeadRow({
               )}
 
               {/* Open full panel */}
-              <button
+              <motion.button
                 onClick={(e) => { e.stopPropagation(); onOpenPanel(lead); }}
-                className="rounded-xl px-4 py-2 text-sm font-bold transition-colors"
+                whileHover={{ scale: 1.02, boxShadow: "0 0 16px rgba(99,102,241,0.3)" }}
+                whileTap={{ scale: 0.97 }}
+                className="rounded-xl px-4 py-2 text-sm font-bold"
                 style={{ background: "rgba(99,102,241,0.15)", border: "1px solid rgba(99,102,241,0.3)", color: "rgb(129,140,248)", fontFamily: F }}>
                 ✉️ פתח פרטים מלאים / כתיבת מייל
-              </button>
+              </motion.button>
             </div>
           </motion.div>
         )}
@@ -465,9 +469,11 @@ export default function LeadsTable({ leads: initialLeads, mode = "active" }: { l
                 { key: "created_at" as SortKey, label: "תאריך" },
                 { key: "company_name" as SortKey, label: "שם" },
               ]).map(({ key, label }) => (
-                <button key={key}
+                <motion.button key={key}
                   onClick={() => setSort((p) => ({ key, dir: p.key === key ? (p.dir === "asc" ? "desc" : "asc") : (key === "business_score" ? "desc" : "asc") }))}
-                  className="rounded-lg px-2.5 py-1 text-xs transition-all"
+                  whileHover={{ scale: 1.06 }}
+                  whileTap={{ scale: 0.94 }}
+                  className="rounded-lg px-2.5 py-1 text-xs"
                   style={{
                     fontWeight: sort.key === key ? 700 : 400, fontFamily: F,
                     background: sort.key === key ? "rgba(99,102,241,0.15)" : "rgba(255,255,255,0.04)",
@@ -475,7 +481,7 @@ export default function LeadsTable({ leads: initialLeads, mode = "active" }: { l
                     color: sort.key === key ? "rgb(129,140,248)" : "rgba(255,255,255,0.35)",
                   }}>
                   {sort.key === key ? (sort.dir === "asc" ? "↑" : "↓") : "↕"} {label}
-                </button>
+                </motion.button>
               ))}
             </div>
             <span className="hidden sm:inline text-xs text-muted-foreground shrink-0" style={{ fontFamily: F }}>
@@ -491,9 +497,11 @@ export default function LeadsTable({ leads: initialLeads, mode = "active" }: { l
                 { key: "created_at" as SortKey, label: "תאריך" },
                 { key: "company_name" as SortKey, label: "שם" },
               ]).map(({ key, label }) => (
-                <button key={key}
+                <motion.button key={key}
                   onClick={() => setSort((p) => ({ key, dir: p.key === key ? (p.dir === "asc" ? "desc" : "asc") : (key === "business_score" ? "desc" : "asc") }))}
-                  className="rounded-lg px-2.5 py-1 text-xs transition-all"
+                  whileHover={{ scale: 1.06 }}
+                  whileTap={{ scale: 0.94 }}
+                  className="rounded-lg px-2.5 py-1 text-xs"
                   style={{
                     fontWeight: sort.key === key ? 700 : 400, fontFamily: F,
                     background: sort.key === key ? "rgba(99,102,241,0.15)" : "rgba(255,255,255,0.04)",
@@ -501,7 +509,7 @@ export default function LeadsTable({ leads: initialLeads, mode = "active" }: { l
                     color: sort.key === key ? "rgb(129,140,248)" : "rgba(255,255,255,0.35)",
                   }}>
                   {sort.key === key ? (sort.dir === "asc" ? "↑" : "↓") : "↕"} {label}
-                </button>
+                </motion.button>
               ))}
             </div>
             <span className="text-xs text-muted-foreground" style={{ fontFamily: F }}>

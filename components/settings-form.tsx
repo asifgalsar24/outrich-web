@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { motion } from "framer-motion";
 import { createClient } from "@/lib/supabase/client";
 import { GlassEffect } from "@/components/ui/liquid-glass";
 
@@ -84,7 +85,7 @@ export default function SettingsForm({
     <div className="max-w-2xl mx-auto px-4 sm:px-6 py-6 flex flex-col gap-4 sm:gap-6" dir="rtl" style={{ fontFamily: F }}>
 
       {/* ── Section 1: Brand Info ───────────────────────────── */}
-      <GlassEffect className="rounded-2xl">
+      <GlassEffect className="rounded-2xl" interactive>
         <section className="p-6 flex flex-col gap-5">
           <div>
             <p style={{ fontWeight: 800, fontSize: "1rem", color: "#fff" }}>המידע שלך</p>
@@ -137,7 +138,7 @@ export default function SettingsForm({
       </GlassEffect>
 
       {/* ── Section 2: Voice Profile ────────────────────────── */}
-      <GlassEffect className="rounded-2xl">
+      <GlassEffect className="rounded-2xl" interactive>
         <section className="p-6 flex flex-col gap-5">
           <div>
             <p style={{ fontWeight: 800, fontSize: "1rem", color: "#fff" }}>קול המותג</p>
@@ -204,7 +205,7 @@ export default function SettingsForm({
       </GlassEffect>
 
       {/* ── Section 3: Email Settings ───────────────────────── */}
-      <GlassEffect className="rounded-2xl">
+      <GlassEffect className="rounded-2xl" interactive>
         <section className="p-6 flex flex-col gap-5">
           <div>
             <p style={{ fontWeight: 800, fontSize: "1rem", color: "#fff" }}>הגדרות מייל</p>
@@ -252,7 +253,7 @@ export default function SettingsForm({
       </GlassEffect>
 
       {/* ── Section 4: Portfolio ────────────────────────────── */}
-      <GlassEffect className="rounded-2xl">
+      <GlassEffect className="rounded-2xl" interactive>
         <section className="p-6 flex flex-col gap-5">
           <div>
             <p style={{ fontWeight: 800, fontSize: "1rem", color: "#fff" }}>פורטפוליו</p>
@@ -292,17 +293,19 @@ export default function SettingsForm({
 
       {/* ── Save ────────────────────────────────────────────── */}
       <div className="flex items-center gap-4 pb-8">
-        <button
+        <motion.button
           onClick={handleSave}
           disabled={saving}
-          className="rounded-xl px-8 py-3 transition-all disabled:opacity-50 hover:opacity-90"
+          whileHover={!saving ? { scale: 1.03, boxShadow: "0 0 24px rgba(99,102,241,0.5)" } : {}}
+          whileTap={!saving ? { scale: 0.97 } : {}}
+          className="rounded-xl px-8 py-3 transition-all disabled:opacity-50"
           style={{
             fontFamily: F, fontWeight: 700, fontSize: "0.95rem",
             background: "rgb(99,102,241)", color: "#fff",
           }}
         >
           {saving ? "שומר..." : "שמור הגדרות"}
-        </button>
+        </motion.button>
 
         {saved && (
           <p style={{ fontWeight: 400, fontSize: "0.85rem", color: "rgb(74,222,128)" }}>

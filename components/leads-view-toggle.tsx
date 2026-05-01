@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { motion } from "framer-motion";
 import { IoListOutline, IoAppsOutline, IoArchiveOutline } from "react-icons/io5";
 import type { Lead } from "@/lib/types";
 import LeadsTable from "@/components/leads-table";
@@ -25,23 +26,29 @@ export default function LeadsViewToggle({ leads, archivedLeads }: { leads: Lead[
             const active = view === key;
             const gradient = `linear-gradient(45deg, ${from}, ${to})`;
             return (
-              <li
+              <motion.li
                 key={key}
                 onClick={() => setView(key)}
-                className={`relative h-[42px] rounded-full flex items-center justify-center cursor-pointer transition-all duration-300 border border-white/[0.08] overflow-hidden group ${
+                whileHover={{ scale: 1.06 }}
+                whileTap={{ scale: 0.94 }}
+                transition={{ type: "spring", stiffness: 400, damping: 20 }}
+                className={`relative h-[42px] rounded-full flex items-center justify-center cursor-pointer border border-white/[0.08] overflow-hidden group ${
                   active ? "w-[110px]" : "w-[42px] hover:w-[110px]"
                 }`}
-                style={{ background: "rgba(255,255,255,0.05)" }}
+                style={{
+                  background: "rgba(255,255,255,0.05)",
+                  transition: "width 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+                }}
               >
                 {/* Gradient fill */}
                 <span
                   className="absolute inset-0 rounded-full transition-opacity duration-300 pointer-events-none"
                   style={{ background: gradient, opacity: active ? 1 : 0 }}
                 />
-                {/* Glow */}
+                {/* Glow — strengthened */}
                 <span
-                  className="absolute top-[5px] inset-x-0 h-full rounded-full blur-[14px] -z-10 transition-opacity duration-300 pointer-events-none"
-                  style={{ background: gradient, opacity: active ? 0.45 : 0 }}
+                  className="absolute top-[5px] inset-x-0 h-full rounded-full blur-[24px] -z-10 transition-opacity duration-300 pointer-events-none"
+                  style={{ background: gradient, opacity: active ? 0.7 : 0 }}
                 />
                 {/* Icon (visible when collapsed) */}
                 <span
@@ -74,7 +81,7 @@ export default function LeadsViewToggle({ leads, archivedLeads }: { leads: Lead[
                     )}
                   </span>
                 )}
-              </li>
+              </motion.li>
             );
           })}
         </ul>

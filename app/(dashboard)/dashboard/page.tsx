@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { GlassEffect } from "@/components/ui/liquid-glass";
+import KpiCard from "@/components/kpi-card";
 
 const F = "var(--font-osh), sans-serif";
 
@@ -59,10 +60,10 @@ export default async function DashboardPage() {
     ]);
 
   const stats = [
-    { label: "סה״כ לידים",      value: total ?? 0, color: "rgba(255,255,255,0.9)" },
-    { label: "לידים חמים 🔥",   value: hot ?? 0,   color: "rgb(251,146,60)" },
-    { label: "לידים ביניים 🌡", value: warm ?? 0,  color: "rgb(250,204,21)" },
-    { label: "נשלחו ל-Lemlist", value: sent ?? 0,  color: "rgb(129,140,248)" },
+    { label: "סה״כ לידים",      value: total ?? 0, color: "rgba(255,255,255,0.9)", glowColor: "rgba(255,255,255,0.4)" },
+    { label: "לידים חמים 🔥",   value: hot   ?? 0, color: "rgb(251,146,60)",       glowColor: "rgba(251,146,60,0.6)"  },
+    { label: "לידים ביניים 🌡", value: warm  ?? 0, color: "rgb(250,204,21)",       glowColor: "rgba(250,204,21,0.5)"  },
+    { label: "נשלחו ל-Lemlist", value: sent  ?? 0, color: "rgb(129,140,248)",      glowColor: "rgba(129,140,248,0.5)" },
   ];
 
   return (
@@ -76,22 +77,20 @@ export default async function DashboardPage() {
 
       {/* KPI cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {stats.map((s) => (
-          <GlassEffect key={s.label} className="rounded-2xl">
-            <div className="p-6">
-              <p style={{ fontWeight: 800, fontSize: "2.4rem", color: s.color, lineHeight: 1 }}>
-                {s.value}
-              </p>
-              <p style={{ fontWeight: 400, fontSize: "0.82rem", color: "rgba(255,255,255,0.4)", marginTop: "0.5rem" }}>
-                {s.label}
-              </p>
-            </div>
-          </GlassEffect>
+        {stats.map((s, i) => (
+          <KpiCard
+            key={s.label}
+            label={s.label}
+            value={s.value}
+            color={s.color}
+            glowColor={s.glowColor}
+            index={i}
+          />
         ))}
       </div>
 
       {/* Scoring breakdown */}
-      <GlassEffect className="rounded-2xl mt-8">
+      <GlassEffect className="rounded-2xl mt-8" interactive>
         <div className="p-7">
           <div className="mb-6">
             <p style={{ fontWeight: 800, fontSize: "1.05rem", color: "rgba(255,255,255,0.85)" }}>
@@ -182,7 +181,7 @@ export default async function DashboardPage() {
       </GlassEffect>
 
       {/* What now */}
-      <GlassEffect className="rounded-2xl mt-6">
+      <GlassEffect className="rounded-2xl mt-6" interactive>
         <div className="p-6">
           <p style={{ fontWeight: 700, fontSize: "1rem", color: "rgba(255,255,255,0.7)", marginBottom: "0.5rem" }}>
             מה עכשיו?
