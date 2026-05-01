@@ -8,10 +8,10 @@ import CrmBoard from "@/components/crm-board";
 
 type View = "table" | "board" | "archive";
 
-const TABS: { key: View; label: string; icon: React.ReactNode; gf: string; gt: string }[] = [
-  { key: "table",   label: "טבלה",   icon: <IoListOutline />,    gf: "#a955ff", gt: "#ea51ff" },
-  { key: "board",   label: "לוח",    icon: <IoAppsOutline />,    gf: "#56CCF2", gt: "#2F80ED" },
-  { key: "archive", label: "ארכיון", icon: <IoArchiveOutline />, gf: "#FF9966", gt: "#FF5E62" },
+const TABS: { key: View; label: string; icon: React.ReactNode; from: string; to: string }[] = [
+  { key: "table",   label: "טבלה",   icon: <IoListOutline />,    from: "#a955ff", to: "#ea51ff" },
+  { key: "board",   label: "לוח",    icon: <IoAppsOutline />,    from: "#56CCF2", to: "#2F80ED" },
+  { key: "archive", label: "ארכיון", icon: <IoArchiveOutline />, from: "#FF9966", to: "#FF5E62" },
 ];
 
 export default function LeadsViewToggle({ leads, archivedLeads }: { leads: Lead[]; archivedLeads: Lead[] }) {
@@ -21,8 +21,9 @@ export default function LeadsViewToggle({ leads, archivedLeads }: { leads: Lead[
     <div className="flex flex-col h-full">
       <div className="flex items-center gap-3 px-6 py-4 border-b border-white/[0.06]" dir="rtl">
         <ul className="flex gap-3">
-          {TABS.map(({ key, label, icon, gf, gt }) => {
+          {TABS.map(({ key, label, icon, from, to }) => {
             const active = view === key;
+            const gradient = `linear-gradient(45deg, ${from}, ${to})`;
             return (
               <li
                 key={key}
@@ -30,18 +31,21 @@ export default function LeadsViewToggle({ leads, archivedLeads }: { leads: Lead[
                 className={`relative h-[42px] rounded-full flex items-center justify-center cursor-pointer transition-all duration-300 border border-white/[0.08] overflow-hidden group ${
                   active ? "w-[110px]" : "w-[42px] hover:w-[110px]"
                 }`}
-                style={{ background: "rgba(255,255,255,0.05)", "--gf": gf, "--gt": gt } as React.CSSProperties}
+                style={{ background: "rgba(255,255,255,0.05)" }}
               >
+                {/* Gradient fill */}
                 <span
-                  className="absolute inset-0 bg-[linear-gradient(45deg,var(--gf),var(--gt))] transition-opacity duration-300"
-                  style={{ opacity: active ? 1 : 0 }}
+                  className="absolute inset-0 rounded-full transition-opacity duration-300 pointer-events-none"
+                  style={{ background: gradient, opacity: active ? 1 : 0 }}
                 />
+                {/* Glow */}
                 <span
-                  className="absolute top-[5px] inset-x-0 h-full bg-[linear-gradient(45deg,var(--gf),var(--gt))] blur-[14px] -z-10 transition-opacity duration-300"
-                  style={{ opacity: active ? 0.45 : 0 }}
+                  className="absolute top-[5px] inset-x-0 h-full rounded-full blur-[14px] -z-10 transition-opacity duration-300 pointer-events-none"
+                  style={{ background: gradient, opacity: active ? 0.45 : 0 }}
                 />
+                {/* Icon (visible when collapsed) */}
                 <span
-                  className="relative z-10 text-lg transition-all duration-200"
+                  className="relative z-10 text-lg pointer-events-none transition-all duration-200"
                   style={{
                     color: "rgba(255,255,255,0.55)",
                     opacity: active ? 0 : 1,
@@ -51,23 +55,19 @@ export default function LeadsViewToggle({ leads, archivedLeads }: { leads: Lead[
                 >
                   {icon}
                 </span>
+                {/* Label (visible when active) */}
                 <span
-                  className="absolute z-10 text-white text-sm font-bold tracking-wide transition-all duration-200 flex items-center gap-1"
-                  style={{
-                    opacity: active ? 1 : 0,
-                    transform: active ? "scale(1)" : "scale(0.8)",
-                  }}
+                  className="absolute z-10 text-white text-sm font-bold tracking-wide pointer-events-none transition-all duration-200 flex items-center gap-1"
+                  style={{ opacity: active ? 1 : 0, transform: active ? "scale(1)" : "scale(0.8)" }}
                 >
                   {label}
                   {key === "archive" && archivedLeads.length > 0 && (
                     <span className="text-xs opacity-70">({archivedLeads.length})</span>
                   )}
                 </span>
-                {/* hover label for inactive */}
+                {/* Hover label (visible on hover when inactive) */}
                 {!active && (
-                  <span
-                    className="absolute z-10 text-white text-sm font-bold tracking-wide transition-all duration-200 flex items-center gap-1 opacity-0 scale-75 group-hover:opacity-100 group-hover:scale-100"
-                  >
+                  <span className="absolute z-10 text-white text-sm font-bold tracking-wide pointer-events-none flex items-center gap-1 opacity-0 scale-75 group-hover:opacity-100 group-hover:scale-100 transition-all duration-200">
                     {label}
                     {key === "archive" && archivedLeads.length > 0 && (
                       <span className="text-xs opacity-70">({archivedLeads.length})</span>
