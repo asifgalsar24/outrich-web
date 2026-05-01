@@ -25,77 +25,71 @@ function KanbanCard({
 }) {
   const [pickerOpen, setPickerOpen] = useState(false);
 
+  // Colored avatar circle using company initial
+  const initial = lead.company_name?.[0]?.toUpperCase() ?? "?";
+  const tierColors: Record<string, string> = {
+    hot:  "linear-gradient(135deg,rgb(251,146,60),rgb(239,68,68))",
+    warm: "linear-gradient(135deg,rgb(250,204,21),rgb(251,146,60))",
+    cold: "linear-gradient(135deg,rgb(99,102,241),rgb(129,140,248))",
+  };
+  const avatarGradient = tierColors[lead.lead_quality ?? "cold"] ?? tierColors.cold;
+
   return (
     <motion.div
       layout
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
+      initial={{ opacity: 0, x: 10, y: 15, rotate: 1 }}
+      animate={{ opacity: 1, x: 0, y: 0, rotate: 0 }}
       exit={{ opacity: 0, scale: 0.96 }}
-      transition={{ duration: 0.18 }}
+      transition={{ type: "spring", stiffness: 400, damping: 35, mass: 0.5 }}
       draggable
-      onDragStart={(e) => {
-        onDragStart(lead.id);
-        (e.target as HTMLElement).style.opacity = "0.5";
-      }}
-      onDragEnd={(e) => {
-        (e.target as HTMLElement).style.opacity = "1";
-      }}
-      className="rounded-2xl p-4 flex flex-col gap-3 cursor-grab active:cursor-grabbing select-none"
-      style={{
-        background: "#111",
-        border: "1px solid rgba(255,255,255,0.07)",
-        fontFamily: F,
-        borderRight: `3px solid ${stage.borderActive}`,
-      }}
+      onDragStart={(e) => { onDragStart(lead.id); (e.target as HTMLElement).style.opacity = "0.5"; }}
+      onDragEnd={(e) => { (e.target as HTMLElement).style.opacity = "1"; }}
+      className="flex items-center gap-3 py-3.5 border-b border-white/[0.05] last:border-0 cursor-grab active:cursor-grabbing select-none group/card"
+      style={{ fontFamily: F }}
       dir="rtl"
     >
-      {/* Company name */}
-      <p style={{ fontWeight: 800, fontSize: "0.92rem", color: "#fff", lineHeight: 1.25 }}>
-        {lead.company_name}
-      </p>
-
-      {/* Score + ad type */}
-      <div className="flex items-center gap-2 flex-wrap">
-        <ScoreBadge score={lead.business_score} tier={lead.lead_quality} />
-        {lead.ad_type && <AdTypeBadge type={lead.ad_type} />}
+      {/* Avatar */}
+      <div className="relative shrink-0">
+        <div className="w-11 h-11 rounded-full flex items-center justify-center text-white font-bold text-base shadow-sm ring-2 ring-background"
+          style={{ background: avatarGradient }}>
+          {initial}
+        </div>
+        {/* Tier dot */}
+        <div className="absolute bottom-0 right-0 w-3.5 h-3.5 rounded-full bg-background flex items-center justify-center shadow-sm">
+          <div className="w-2 h-2 rounded-full" style={{
+            background: lead.lead_quality === "hot" ? "rgb(251,146,60)" : lead.lead_quality === "warm" ? "rgb(250,204,21)" : "rgb(99,102,241)"
+          }} />
+        </div>
       </div>
 
-      {/* Niche + ad count */}
-      {(lead.niche || lead.active_ads_count != null) && (
-        <div className="flex items-center gap-1.5" style={{ fontSize: "0.77rem", color: "rgba(255,255,255,0.38)" }}>
-          {lead.niche && <span>{lead.niche}</span>}
-          {lead.active_ads_count != null && (
-            <span>· 📢 {lead.active_ads_count}</span>
-          )}
-          {lead.page_followers != null && (
-            <span>· 👥 {lead.page_followers >= 1000 ? `${(lead.page_followers / 1000).toFixed(1)}K` : lead.page_followers}</span>
-          )}
+      {/* Info */}
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-bold text-white truncate leading-none mb-1.5">{lead.company_name}</p>
+        <div className="flex items-center gap-2 flex-wrap">
+          <ScoreBadge score={lead.business_score} tier={lead.lead_quality} />
+          {lead.ad_type && <AdTypeBadge type={lead.ad_type} />}
         </div>
-      )}
-
-      {/* Email */}
-      {lead.email_address && (
-        <p style={{ fontSize: "0.74rem", color: "rgba(255,255,255,0.28)", fontWeight: 300, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-          ✉ {lead.email_address}
-        </p>
-      )}
+        {lead.email_address && (
+          <p className="text-xs mt-1 truncate" style={{ color: "rgba(255,255,255,0.28)" }}>✉ {lead.email_address}</p>
+        )}
+      </div>
 
       {/* Actions */}
-      <div className="flex items-center gap-2 pt-1 border-t border-white/[0.06]" style={{ position: "relative" }}>
+      <div className="shrink-0 flex flex-col gap-1.5 opacity-0 group-hover/card:opacity-100 transition-opacity" style={{ position: "relative" }}>
         <button
           onClick={() => onOpenPanel(lead)}
-          className="rounded-lg px-2.5 py-1 transition-colors hover:bg-white/[0.08]"
-          style={{ fontSize: "0.74rem", fontWeight: 600, fontFamily: F, color: "rgba(255,255,255,0.5)", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}
+          className="rounded-lg px-2 py-1 transition-colors hover:bg-white/[0.1]"
+          style={{ fontSize: "0.72rem", fontWeight: 600, fontFamily: F, color: "rgba(255,255,255,0.5)", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}
         >
           ✉️ מייל
         </button>
 
         <button
           onClick={() => setPickerOpen((v) => !v)}
-          className="rounded-lg px-2.5 py-1 transition-colors hover:bg-white/[0.08]"
-          style={{ fontSize: "0.74rem", fontWeight: 600, fontFamily: F, color: stage.color, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}
+          className="rounded-lg px-2 py-1 transition-colors hover:bg-white/[0.1]"
+          style={{ fontSize: "0.72rem", fontWeight: 600, fontFamily: F, color: stage.color, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}
         >
-          ↺ שנה שלב
+          ↺ שלב
         </button>
 
         {/* Stage picker dropdown */}
@@ -177,8 +171,8 @@ function KanbanColumn({
 
       {/* Cards */}
       <div
-        className="flex flex-col gap-3 flex-1 overflow-y-auto rounded-xl p-1 transition-colors"
-        style={{ background: dragOver ? "rgba(255,255,255,0.015)" : "transparent", minHeight: "80px" }}
+        className="flex flex-col flex-1 overflow-y-auto rounded-2xl px-4 py-2 transition-colors"
+        style={{ background: dragOver ? "rgba(255,255,255,0.02)" : "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)", minHeight: "80px" }}
       >
         <AnimatePresence>
           {leads.map((lead) => (

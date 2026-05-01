@@ -1,16 +1,20 @@
 "use client";
 
-import { useState, useMemo, useRef, useEffect } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
+import { Search, SlidersHorizontal, ChevronDown, Check } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import type { Lead } from "@/lib/types";
 import LeadPanel, { ScoreBadge, AdTypeBadge } from "@/components/lead-panel";
 
-const F = "var(--font-osh), sans-serif";
-
 export type { Lead };
 
-type SortKey = "company_name" | "business_score" | "ad_type" | "niche" | "created_at";
+const F = "var(--font-osh), sans-serif";
+
+type SortKey = "company_name" | "business_score" | "created_at";
 type SortDir = "asc" | "desc";
 
 interface Filters {
@@ -22,262 +26,337 @@ interface Filters {
   minScore: number;
 }
 
-const DEFAULT_FILTERS: Filters = {
-  tier: "all",
-  adType: [],
-  niche: [],
-  hasEmail: "all",
-  lemlist: "all",
-  minScore: 0,
-};
+const DEFAULT_FILTERS: Filters = { tier: "all", adType: [], niche: [], hasEmail: "all", lemlist: "all", minScore: 0 };
 
-// ── Badges ────────────────────────────────────────────────────────────────────
-
-function LemlistBadge({ status }: { status: string | null }) {
-  if (status === "sent")
-    return <span style={{ fontWeight: 400, fontSize: "0.8rem", color: "rgb(74,222,128)" }}>✓ נשלח</span>;
-  return <span style={{ fontWeight: 300, fontSize: "0.8rem", color: "rgba(255,255,255,0.2)" }}>ממתין</span>;
-}
-
-// ── Sort icon ─────────────────────────────────────────────────────────────────
-
-function SortIcon({ active, dir }: { active: boolean; dir: SortDir }) {
-  return (
-    <span style={{ fontSize: "0.65rem", color: active ? "rgb(129,140,248)" : "rgba(255,255,255,0.2)", marginRight: "4px" }}>
-      {active ? (dir === "asc" ? "↑" : "↓") : "↕"}
-    </span>
-  );
-}
-
-// ── Filter Panel ──────────────────────────────────────────────────────────────
+// ── Filter panel ──────────────────────────────────────────────────────────────
 
 function FilterPanel({
-  filters,
-  onChange,
-  onClose,
-  adTypes,
-  niches,
+  filters, onChange, niches,
 }: {
   filters: Filters;
   onChange: (f: Filters) => void;
-  onClose: () => void;
-  adTypes: string[];
   niches: string[];
 }) {
-  const ref = useRef<HTMLDivElement>(null);
+  const hasActive = filters.tier !== "all" || filters.adType.length > 0 || filters.niche.length > 0
+    || filters.hasEmail !== "all" || filters.lemlist !== "all" || filters.minScore > 0;
 
-  useEffect(() => {
-    function handleClick(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) onClose();
-    }
-    document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
-  }, [onClose]);
-
+  const tierLabels = { all: "הכל", hot: "🔥 חם", warm: "🌡 ביניים", cold: "❄️ קר" };
   const adTypeLabels: Record<string, string> = { video: "וידאו", carousel: "קרוסלה", image: "תמונה" };
 
-  function toggleAdType(t: string) {
-    const next = filters.adType.includes(t) ? filters.adType.filter((x) => x !== t) : [...filters.adType, t];
-    onChange({ ...filters, adType: next });
-  }
-
-  function toggleNiche(n: string) {
-    const next = filters.niche.includes(n) ? filters.niche.filter((x) => x !== n) : [...filters.niche, n];
-    onChange({ ...filters, niche: next });
+  function toggle<T>(arr: T[], val: T) {
+    return arr.includes(val) ? arr.filter((x) => x !== val) : [...arr, val];
   }
 
   return (
     <motion.div
-      ref={ref}
-      initial={{ opacity: 0, y: -6, scale: 0.98 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      exit={{ opacity: 0, y: -6, scale: 0.98 }}
-      transition={{ duration: 0.15 }}
-      className="absolute top-full mt-2 z-50 flex flex-col gap-5 p-5"
-      style={{
-        right: 0,
-        width: "300px",
-        background: "#111",
-        border: "1px solid rgba(255,255,255,0.1)",
-        borderRadius: "1rem",
-        fontFamily: F,
-        boxShadow: "0 20px 60px rgba(0,0,0,0.6)",
-      }}
-      dir="rtl"
+      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ delay: 0.04 }}
+      className="flex h-full flex-col space-y-5 overflow-y-auto bg-card p-5 border-l border-border"
+      dir="rtl" style={{ fontFamily: F }}
     >
-      <p style={{ fontWeight: 700, fontSize: "0.8rem", color: "rgba(255,255,255,0.5)", letterSpacing: "0.08em" }} className="uppercase">
-        סינון מתקדם
-      </p>
+      <div className="flex items-center justify-between">
+        <h3 className="text-sm font-bold text-foreground">סינון</h3>
+        {hasActive && (
+          <Button variant="ghost" size="sm" onClick={() => onChange(DEFAULT_FILTERS)} className="h-6 text-xs text-muted-foreground">
+            נקה
+          </Button>
+        )}
+      </div>
 
       {/* Tier */}
-      <div>
-        <p style={{ fontWeight: 600, fontSize: "0.75rem", color: "rgba(255,255,255,0.35)", marginBottom: "0.5rem" }}>דרגה</p>
-        <div className="flex gap-1.5 flex-wrap">
-          {(["all", "hot", "warm", "cold"] as const).map((t) => (
-            <button
-              key={t}
-              onClick={() => onChange({ ...filters, tier: t })}
-              className="rounded-lg px-3 py-1 transition-all"
-              style={{
-                fontWeight: filters.tier === t ? 700 : 400, fontSize: "0.8rem",
-                background: filters.tier === t ? "rgba(99,102,241,0.2)" : "rgba(255,255,255,0.04)",
-                border: filters.tier === t ? "1px solid rgba(99,102,241,0.4)" : "1px solid rgba(255,255,255,0.08)",
-                color: filters.tier === t ? "rgb(129,140,248)" : "rgba(255,255,255,0.4)",
-              }}
-            >
-              {t === "all" ? "הכל" : t === "hot" ? "🔥 חם" : t === "warm" ? "🌡 ביניים" : "❄️ קר"}
-            </button>
-          ))}
-        </div>
+      <div className="space-y-2">
+        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">דרגה</p>
+        {(["all", "hot", "warm", "cold"] as const).map((t) => {
+          const sel = filters.tier === t;
+          return (
+            <motion.button key={t} whileHover={{ x: 2 }} onClick={() => onChange({ ...filters, tier: t })}
+              className={`flex w-full items-center justify-between gap-2 border rounded-md px-3 py-2 text-sm transition-colors ${sel ? "border-primary bg-primary/10 text-primary" : "border-border text-muted-foreground hover:border-primary/40 hover:bg-white/[0.03]"}`}>
+              <span>{tierLabels[t]}</span>
+              {sel && <Check className="h-3.5 w-3.5" />}
+            </motion.button>
+          );
+        })}
       </div>
 
       {/* Min score */}
-      <div>
-        <div className="flex items-center justify-between mb-2">
-          <p style={{ fontWeight: 600, fontSize: "0.75rem", color: "rgba(255,255,255,0.35)" }}>ציון מינימלי</p>
-          <span style={{ fontWeight: 700, fontSize: "0.85rem", color: "rgb(129,140,248)" }}>{filters.minScore}+</span>
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">ציון מינימלי</p>
+          <span className="text-xs font-bold text-primary">{filters.minScore}+</span>
         </div>
-        <input
-          type="range" min={0} max={10} step={1}
-          value={filters.minScore}
+        <input type="range" min={0} max={10} step={1} value={filters.minScore}
           onChange={(e) => onChange({ ...filters, minScore: Number(e.target.value) })}
-          className="w-full accent-indigo-500"
-        />
-        <div className="flex justify-between" style={{ fontSize: "0.7rem", color: "rgba(255,255,255,0.2)", marginTop: "2px" }}>
+          className="w-full accent-indigo-500" />
+        <div className="flex justify-between text-muted-foreground" style={{ fontSize: "0.68rem" }}>
           <span>0</span><span>5</span><span>10</span>
         </div>
       </div>
 
       {/* Ad type */}
-      {adTypes.length > 0 && (
-        <div>
-          <p style={{ fontWeight: 600, fontSize: "0.75rem", color: "rgba(255,255,255,0.35)", marginBottom: "0.5rem" }}>סוג מודעה</p>
-          <div className="flex gap-1.5 flex-wrap">
-            {adTypes.map((t) => (
-              <button
-                key={t}
-                onClick={() => toggleAdType(t)}
-                className="rounded-lg px-3 py-1 transition-all"
-                style={{
-                  fontWeight: filters.adType.includes(t) ? 700 : 400, fontSize: "0.8rem",
-                  background: filters.adType.includes(t) ? "rgba(99,102,241,0.2)" : "rgba(255,255,255,0.04)",
-                  border: filters.adType.includes(t) ? "1px solid rgba(99,102,241,0.4)" : "1px solid rgba(255,255,255,0.08)",
-                  color: filters.adType.includes(t) ? "rgb(129,140,248)" : "rgba(255,255,255,0.4)",
-                }}
-              >
-                {adTypeLabels[t] ?? t}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
+      <div className="space-y-2">
+        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">סוג מודעה</p>
+        {["video", "carousel", "image"].map((t) => {
+          const sel = filters.adType.includes(t);
+          return (
+            <motion.button key={t} whileHover={{ x: 2 }} onClick={() => onChange({ ...filters, adType: toggle(filters.adType, t) })}
+              className={`flex w-full items-center justify-between gap-2 border rounded-md px-3 py-2 text-sm transition-colors ${sel ? "border-primary bg-primary/10 text-primary" : "border-border text-muted-foreground hover:border-primary/40 hover:bg-white/[0.03]"}`}>
+              <span>{adTypeLabels[t]}</span>
+              {sel && <Check className="h-3.5 w-3.5" />}
+            </motion.button>
+          );
+        })}
+      </div>
 
       {/* Niche */}
       {niches.length > 0 && (
-        <div>
-          <p style={{ fontWeight: 600, fontSize: "0.75rem", color: "rgba(255,255,255,0.35)", marginBottom: "0.5rem" }}>נישה</p>
-          <div className="flex gap-1.5 flex-wrap">
-            {niches.map((n) => (
-              <button
-                key={n}
-                onClick={() => toggleNiche(n)}
-                className="rounded-lg px-3 py-1 transition-all"
-                style={{
-                  fontWeight: filters.niche.includes(n) ? 700 : 400, fontSize: "0.8rem",
-                  background: filters.niche.includes(n) ? "rgba(99,102,241,0.2)" : "rgba(255,255,255,0.04)",
-                  border: filters.niche.includes(n) ? "1px solid rgba(99,102,241,0.4)" : "1px solid rgba(255,255,255,0.08)",
-                  color: filters.niche.includes(n) ? "rgb(129,140,248)" : "rgba(255,255,255,0.4)",
-                }}
-              >
-                {n}
-              </button>
-            ))}
-          </div>
+        <div className="space-y-2">
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">נישה</p>
+          {niches.map((n) => {
+            const sel = filters.niche.includes(n);
+            return (
+              <motion.button key={n} whileHover={{ x: 2 }} onClick={() => onChange({ ...filters, niche: toggle(filters.niche, n) })}
+                className={`flex w-full items-center justify-between gap-2 border rounded-md px-3 py-2 text-sm transition-colors ${sel ? "border-primary bg-primary/10 text-primary" : "border-border text-muted-foreground hover:border-primary/40 hover:bg-white/[0.03]"}`}>
+                <span className="truncate">{n}</span>
+                {sel && <Check className="h-3.5 w-3.5 shrink-0" />}
+              </motion.button>
+            );
+          })}
         </div>
       )}
 
-      {/* Has email */}
-      <div>
-        <p style={{ fontWeight: 600, fontSize: "0.75rem", color: "rgba(255,255,255,0.35)", marginBottom: "0.5rem" }}>כתובת מייל</p>
-        <div className="flex gap-1.5">
-          {(["all", "yes", "no"] as const).map((v) => (
-            <button
-              key={v}
-              onClick={() => onChange({ ...filters, hasEmail: v })}
-              className="rounded-lg px-3 py-1 transition-all"
-              style={{
-                fontWeight: filters.hasEmail === v ? 700 : 400, fontSize: "0.8rem",
-                background: filters.hasEmail === v ? "rgba(99,102,241,0.2)" : "rgba(255,255,255,0.04)",
-                border: filters.hasEmail === v ? "1px solid rgba(99,102,241,0.4)" : "1px solid rgba(255,255,255,0.08)",
-                color: filters.hasEmail === v ? "rgb(129,140,248)" : "rgba(255,255,255,0.4)",
-              }}
-            >
-              {v === "all" ? "הכל" : v === "yes" ? "יש מייל" : "אין מייל"}
-            </button>
-          ))}
-        </div>
+      {/* Email */}
+      <div className="space-y-2">
+        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">מייל</p>
+        {(["all", "yes", "no"] as const).map((v) => {
+          const sel = filters.hasEmail === v;
+          return (
+            <motion.button key={v} whileHover={{ x: 2 }} onClick={() => onChange({ ...filters, hasEmail: v })}
+              className={`flex w-full items-center justify-between gap-2 border rounded-md px-3 py-2 text-sm transition-colors ${sel ? "border-primary bg-primary/10 text-primary" : "border-border text-muted-foreground hover:border-primary/40 hover:bg-white/[0.03]"}`}>
+              <span>{v === "all" ? "הכל" : v === "yes" ? "יש מייל" : "אין מייל"}</span>
+              {sel && <Check className="h-3.5 w-3.5" />}
+            </motion.button>
+          );
+        })}
       </div>
 
       {/* Lemlist */}
-      <div>
-        <p style={{ fontWeight: 600, fontSize: "0.75rem", color: "rgba(255,255,255,0.35)", marginBottom: "0.5rem" }}>סטטוס Lemlist</p>
-        <div className="flex gap-1.5">
-          {(["all", "sent", "pending"] as const).map((v) => (
-            <button
-              key={v}
-              onClick={() => onChange({ ...filters, lemlist: v })}
-              className="rounded-lg px-3 py-1 transition-all"
-              style={{
-                fontWeight: filters.lemlist === v ? 700 : 400, fontSize: "0.8rem",
-                background: filters.lemlist === v ? "rgba(99,102,241,0.2)" : "rgba(255,255,255,0.04)",
-                border: filters.lemlist === v ? "1px solid rgba(99,102,241,0.4)" : "1px solid rgba(255,255,255,0.08)",
-                color: filters.lemlist === v ? "rgb(129,140,248)" : "rgba(255,255,255,0.4)",
-              }}
-            >
-              {v === "all" ? "הכל" : v === "sent" ? "✓ נשלח" : "ממתין"}
-            </button>
-          ))}
-        </div>
+      <div className="space-y-2">
+        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Lemlist</p>
+        {(["all", "sent", "pending"] as const).map((v) => {
+          const sel = filters.lemlist === v;
+          return (
+            <motion.button key={v} whileHover={{ x: 2 }} onClick={() => onChange({ ...filters, lemlist: v })}
+              className={`flex w-full items-center justify-between gap-2 border rounded-md px-3 py-2 text-sm transition-colors ${sel ? "border-primary bg-primary/10 text-primary" : "border-border text-muted-foreground hover:border-primary/40 hover:bg-white/[0.03]"}`}>
+              <span>{v === "all" ? "הכל" : v === "sent" ? "✓ נשלח" : "ממתין"}</span>
+              {sel && <Check className="h-3.5 w-3.5" />}
+            </motion.button>
+          );
+        })}
       </div>
-
-      {/* Reset */}
-      <button
-        onClick={() => onChange(DEFAULT_FILTERS)}
-        className="rounded-lg py-2 transition-colors hover:bg-white/[0.06]"
-        style={{ fontWeight: 400, fontSize: "0.8rem", color: "rgba(255,255,255,0.3)", border: "1px solid rgba(255,255,255,0.08)" }}
-      >
-        נקה סינון
-      </button>
     </motion.div>
   );
 }
 
-// ── Main Table ────────────────────────────────────────────────────────────────
+// ── Lead row ──────────────────────────────────────────────────────────────────
 
-const COLUMNS: { key: SortKey; label: string }[] = [
-  { key: "company_name",   label: "שם עסק"    },
-  { key: "business_score", label: "ציון"       },
-  { key: "ad_type",        label: "סוג מודעה"  },
-  { key: "niche",          label: "ניישה"      },
-  { key: "created_at",     label: "תאריך"      },
-];
+function LeadRow({
+  lead, expanded, onToggle, onOpenPanel, checked, onCheck, onDelete, confirmId, deletingId, onConfirm, onCancelConfirm,
+}: {
+  lead: Lead; expanded: boolean; onToggle: () => void;
+  onOpenPanel: (l: Lead) => void;
+  checked: boolean; onCheck: (e: React.MouseEvent) => void;
+  onDelete: (id: string) => void; confirmId: string | null; deletingId: string | null;
+  onConfirm: (id: string) => void; onCancelConfirm: () => void;
+}) {
+  return (
+    <>
+      <motion.div
+        onClick={onToggle}
+        className="w-full px-5 py-3.5 text-right transition-colors hover:bg-white/[0.025] cursor-pointer border-b border-white/[0.04]"
+        style={{ background: checked ? "rgba(99,102,241,0.06)" : expanded ? "rgba(99,102,241,0.04)" : "transparent" }}
+        dir="rtl"
+      >
+        <div className="flex items-center gap-3">
+          {/* Checkbox */}
+          <span onClick={onCheck} className="shrink-0">
+            <input type="checkbox" checked={checked} onChange={() => {}} className="accent-indigo-500 w-3.5 h-3.5 cursor-pointer" />
+          </span>
+
+          {/* Chevron */}
+          <motion.span animate={{ rotate: expanded ? 180 : 0 }} transition={{ duration: 0.2 }} className="shrink-0">
+            <ChevronDown className="h-4 w-4 text-muted-foreground" />
+          </motion.span>
+
+          {/* Score */}
+          <span className="shrink-0"><ScoreBadge score={lead.business_score} tier={lead.lead_quality} /></span>
+
+          {/* Company name */}
+          <span className="flex-1 min-w-0 font-bold text-sm text-white truncate" style={{ fontFamily: F }}>
+            {lead.company_name}
+          </span>
+
+          {/* Ad type */}
+          {lead.ad_type && <span className="shrink-0"><AdTypeBadge type={lead.ad_type} /></span>}
+
+          {/* Niche */}
+          <span className="shrink-0 text-xs text-muted-foreground hidden md:block" style={{ minWidth: "80px" }}>
+            {lead.niche ?? "—"}
+          </span>
+
+          {/* Email */}
+          <span className="shrink-0 text-xs hidden lg:block" style={{ color: lead.email_address ? "rgba(255,255,255,0.45)" : "rgba(255,255,255,0.18)", minWidth: "140px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            {lead.email_address ?? "אין מייל"}
+          </span>
+
+          {/* Lemlist */}
+          <span className="shrink-0 text-xs" style={{ minWidth: "60px" }}>
+            {lead.lemlist_status === "sent"
+              ? <span style={{ color: "rgb(74,222,128)" }}>✓ נשלח</span>
+              : <span style={{ color: "rgba(255,255,255,0.2)" }}>ממתין</span>}
+          </span>
+
+          {/* Date */}
+          <span className="shrink-0 font-mono text-xs text-muted-foreground hidden xl:block">
+            {new Date(lead.created_at).toLocaleDateString("he-IL")}
+          </span>
+
+          {/* Delete */}
+          <span className="shrink-0" onClick={(e) => e.stopPropagation()}>
+            {confirmId === lead.id ? (
+              <span className="flex items-center gap-1">
+                <button onClick={() => onDelete(lead.id)} disabled={deletingId === lead.id}
+                  className="rounded-lg px-2 py-0.5 text-xs font-bold transition-colors"
+                  style={{ background: "rgba(239,68,68,0.15)", border: "1px solid rgba(239,68,68,0.3)", color: "rgb(248,113,113)", fontFamily: F }}>
+                  {deletingId === lead.id ? "..." : "מחק"}
+                </button>
+                <button onClick={onCancelConfirm}
+                  className="rounded-lg px-1.5 py-0.5 text-xs transition-colors hover:bg-white/[0.06]"
+                  style={{ color: "rgba(255,255,255,0.3)", fontFamily: F }}>ביטול</button>
+              </span>
+            ) : (
+              <button onClick={(e) => { e.stopPropagation(); onConfirm(lead.id); }}
+                className="rounded-lg p-1.5 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-white/[0.06]"
+                style={{ color: "rgba(255,255,255,0.25)", lineHeight: 1, fontSize: "0.85rem" }}>
+                🗑
+              </button>
+            )}
+          </span>
+        </div>
+      </motion.div>
+
+      <AnimatePresence initial={false}>
+        {expanded && (
+          <motion.div
+            key="expanded"
+            initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="overflow-hidden border-b border-white/[0.04] bg-white/[0.015]"
+            dir="rtl"
+          >
+            <div className="p-5 space-y-4">
+              {/* Links */}
+              <div className="flex flex-wrap gap-2">
+                {lead.ad_url && (
+                  <a href={lead.ad_url} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}
+                    className="rounded-lg px-3 py-1.5 text-xs font-medium transition-colors hover:opacity-80"
+                    style={{ color: "rgb(129,140,248)", background: "rgba(99,102,241,0.08)", border: "1px solid rgba(99,102,241,0.2)" }}>
+                    📢 מודעה
+                  </a>
+                )}
+                {lead.facebook_page && (
+                  <a href={lead.facebook_page} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}
+                    className="rounded-lg px-3 py-1.5 text-xs font-medium transition-colors hover:opacity-80"
+                    style={{ color: "rgb(129,140,248)", background: "rgba(99,102,241,0.08)", border: "1px solid rgba(99,102,241,0.2)" }}>
+                    📘 פייסבוק
+                  </a>
+                )}
+                {lead.instagram_page && (
+                  <a href={lead.instagram_page} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}
+                    className="rounded-lg px-3 py-1.5 text-xs font-medium transition-colors hover:opacity-80"
+                    style={{ color: "rgb(129,140,248)", background: "rgba(99,102,241,0.08)", border: "1px solid rgba(99,102,241,0.2)" }}>
+                    📸 אינסטגרם
+                  </a>
+                )}
+                {lead.website_url && (
+                  <a href={lead.website_url} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}
+                    className="rounded-lg px-3 py-1.5 text-xs font-medium transition-colors hover:opacity-80"
+                    style={{ color: "rgb(129,140,248)", background: "rgba(99,102,241,0.08)", border: "1px solid rgba(99,102,241,0.2)" }}>
+                    🌐 אתר
+                  </a>
+                )}
+              </div>
+
+              {/* Ad type breakdown */}
+              {((lead.video_count ?? 0) > 0 || (lead.image_count ?? 0) > 0 || (lead.carousel_count ?? 0) > 0) && (
+                <div className="flex gap-4 text-xs text-muted-foreground">
+                  {(lead.video_count ?? 0) > 0    && <span>🎬 {lead.video_count} וידאו</span>}
+                  {(lead.image_count ?? 0) > 0    && <span>🖼 {lead.image_count} סטטיות</span>}
+                  {(lead.carousel_count ?? 0) > 0 && <span>📂 {lead.carousel_count} קרוסלה</span>}
+                  {lead.oldest_ad_date && (
+                    <span>
+                      📅 ותיקה: {lead.oldest_ad_date}
+                      {lead.oldest_ad_url && (
+                        <a href={lead.oldest_ad_url} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}
+                          className="mr-1.5" style={{ color: "rgb(129,140,248)" }}>← צפה</a>
+                      )}
+                    </span>
+                  )}
+                </div>
+              )}
+
+              {/* Ad copy */}
+              {lead.ad_copy && (
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-1.5">טקסט המודעה</p>
+                  <p className="rounded-lg bg-white/[0.03] border border-white/[0.05] px-3 py-2.5 text-sm text-white/60 leading-relaxed whitespace-pre-wrap line-clamp-4" style={{ fontFamily: F }}>
+                    {lead.ad_copy}
+                  </p>
+                </div>
+              )}
+
+              {/* Research preview */}
+              {lead.perplexity_research && (
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-1.5">מחקר</p>
+                  <p className="rounded-lg bg-white/[0.03] border border-white/[0.05] px-3 py-2.5 text-sm text-white/60 leading-relaxed line-clamp-3" style={{ fontFamily: F }}>
+                    {lead.perplexity_research}
+                  </p>
+                </div>
+              )}
+
+              {/* Open full panel */}
+              <button
+                onClick={(e) => { e.stopPropagation(); onOpenPanel(lead); }}
+                className="rounded-xl px-4 py-2 text-sm font-bold transition-colors"
+                style={{ background: "rgba(99,102,241,0.15)", border: "1px solid rgba(99,102,241,0.3)", color: "rgb(129,140,248)", fontFamily: F }}>
+                ✉️ פתח פרטים מלאים / כתיבת מייל
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
+  );
+}
+
+// ── Main component ────────────────────────────────────────────────────────────
 
 export default function LeadsTable({ leads: initialLeads, mode = "active" }: { leads: Lead[]; mode?: "active" | "archive" }) {
-  const [leads, setLeads]               = useState<Lead[]>(initialLeads);
+  const [leads, setLeads]           = useState<Lead[]>(initialLeads);
   useEffect(() => { setLeads(initialLeads); }, [initialLeads]);
-  const [selected, setSelected]         = useState<Lead | null>(null);
-  const [search, setSearch]             = useState("");
-  const [filters, setFilters]           = useState<Filters>(DEFAULT_FILTERS);
-  const [filterOpen, setFilterOpen]     = useState(false);
-  const [sort, setSort]                 = useState<{ key: SortKey; dir: SortDir }>({ key: "business_score", dir: "desc" });
-  const [confirmId, setConfirmId]       = useState<string | null>(null);
-  const [deletingId, setDeletingId]     = useState<string | null>(null);
-  const [checkedIds, setCheckedIds]     = useState<Set<string>>(new Set());
-  const [bulkConfirm, setBulkConfirm]   = useState(false);
-  const [bulkLoading, setBulkLoading]   = useState(false);
+
+  const [selected, setSelected]     = useState<Lead | null>(null);
+  const [search, setSearch]         = useState("");
+  const [filters, setFilters]       = useState<Filters>(DEFAULT_FILTERS);
+  const [showFilters, setShowFilters] = useState(false);
+  const [sort, setSort]             = useState<{ key: SortKey; dir: SortDir }>({ key: "business_score", dir: "desc" });
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [confirmId, setConfirmId]   = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [checkedIds, setCheckedIds] = useState<Set<string>>(new Set());
+  const [bulkConfirm, setBulkConfirm] = useState(false);
+  const [bulkLoading, setBulkLoading] = useState(false);
   const router = useRouter();
 
-  const adTypes = ["image", "video", "carousel"];
   const niches = useMemo(() => [...new Set(leads.map((l) => l.niche).filter(Boolean))] as string[], [leads]);
 
   const activeFilterCount = useMemo(() => {
@@ -307,59 +386,27 @@ export default function LeadsTable({ leads: initialLeads, mode = "active" }: { l
       if (filters.lemlist === "pending" && l.lemlist_status === "sent") return false;
       return true;
     });
-
-    list = [...list].sort((a, b) => {
+    return [...list].sort((a, b) => {
       const av = a[sort.key] ?? "";
       const bv = b[sort.key] ?? "";
-      const cmp = typeof av === "number" && typeof bv === "number"
-        ? av - bv
-        : String(av).localeCompare(String(bv), "he");
+      const cmp = typeof av === "number" && typeof bv === "number" ? av - bv : String(av).localeCompare(String(bv), "he");
       return sort.dir === "asc" ? cmp : -cmp;
     });
-
-    return list;
   }, [leads, search, filters, sort]);
-
-  function toggleSort(key: SortKey) {
-    setSort((prev) =>
-      prev.key === key
-        ? { key, dir: prev.dir === "asc" ? "desc" : "asc" }
-        : { key, dir: key === "business_score" ? "desc" : "asc" }
-    );
-  }
 
   function toggleCheck(id: string, e: React.MouseEvent) {
     e.stopPropagation();
     setBulkConfirm(false);
-    setCheckedIds((prev) => {
-      const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
-      return next;
-    });
-  }
-
-  function toggleAll() {
-    setBulkConfirm(false);
-    if (checkedIds.size === processed.length) {
-      setCheckedIds(new Set());
-    } else {
-      setCheckedIds(new Set(processed.map((l) => l.id)));
-    }
+    setCheckedIds((prev) => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
   }
 
   async function handleBulkAction(action: "delete" | "archive" | "restore") {
     setBulkLoading(true);
     const ids = [...checkedIds];
-    await fetch("/api/leads/bulk", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ids, action }),
-    });
+    await fetch("/api/leads/bulk", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ids, action }) });
     setLeads((prev) => prev.filter((l) => !ids.includes(l.id)));
     if (selected && ids.includes(selected.id)) setSelected(null);
-    setCheckedIds(new Set());
-    setBulkConfirm(false);
-    setBulkLoading(false);
+    setCheckedIds(new Set()); setBulkConfirm(false); setBulkLoading(false);
     router.refresh();
   }
 
@@ -368,303 +415,166 @@ export default function LeadsTable({ leads: initialLeads, mode = "active" }: { l
     await fetch(`/api/leads/${id}`, { method: "DELETE" });
     setLeads((prev) => prev.filter((l) => l.id !== id));
     if (selected?.id === id) setSelected(null);
-    setConfirmId(null);
-    setDeletingId(null);
+    setConfirmId(null); setDeletingId(null);
     router.refresh();
   }
 
   return (
     <div className="relative flex h-full" style={{ fontFamily: F }}>
-      {/* Overlay */}
       <AnimatePresence>
         {selected && (
-          <motion.div
-            key="overlay"
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            onClick={() => setSelected(null)}
-            className="fixed inset-0 z-30 bg-black/40"
-          />
+          <motion.div key="overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            onClick={() => setSelected(null)} className="fixed inset-0 z-30 bg-black/40" />
         )}
       </AnimatePresence>
 
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        {/* Toolbar */}
-        <div className="flex items-center gap-3 px-6 py-4 border-b border-white/[0.06] flex-wrap" dir="rtl">
-          <input
-            type="text"
-            placeholder="חיפוש לפי שם עסק..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="rounded-xl border border-white/[0.1] bg-white/[0.04] px-4 py-2 text-white placeholder:text-white/20 outline-none focus:border-indigo-500/50 transition-all"
-            style={{ fontFamily: F, fontWeight: 300, fontSize: "0.88rem", width: "clamp(140px, 40vw, 220px)" }}
-            dir="rtl"
-          />
-
-          <div className="relative">
-            <button
-              onClick={() => setFilterOpen((v) => !v)}
-              className="flex items-center gap-2 rounded-xl px-3 py-2 transition-all"
-              style={{
-                fontFamily: F, fontWeight: 600, fontSize: "0.82rem",
-                background: activeFilterCount > 0 ? "rgba(99,102,241,0.15)" : "rgba(255,255,255,0.04)",
-                border: activeFilterCount > 0 ? "1px solid rgba(99,102,241,0.35)" : "1px solid rgba(255,255,255,0.08)",
-                color: activeFilterCount > 0 ? "rgb(129,140,248)" : "rgba(255,255,255,0.45)",
-              }}
-            >
-              ⚙ סינון
-              {activeFilterCount > 0 && (
-                <span className="rounded-full px-1.5 py-0.5 text-xs font-bold"
-                  style={{ background: "rgba(99,102,241,0.3)", color: "rgb(129,140,248)", fontSize: "0.7rem" }}>
-                  {activeFilterCount}
-                </span>
-              )}
-              <span style={{ fontSize: "0.65rem", opacity: 0.5 }}>{filterOpen ? "▲" : "▼"}</span>
-            </button>
-
-            <AnimatePresence>
-              {filterOpen && (
-                <FilterPanel
-                  filters={filters}
-                  onChange={setFilters}
-                  onClose={() => setFilterOpen(false)}
-                  adTypes={adTypes}
-                  niches={niches}
-                />
-              )}
-            </AnimatePresence>
+        {/* Header */}
+        <div className="flex items-center gap-3 px-5 py-4 border-b border-border" dir="rtl">
+          <div className="relative flex-1 max-w-[280px]">
+            <Search className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder="חיפוש לפי שם עסק..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pr-9 text-sm bg-white/[0.04] border-white/[0.1] focus-visible:ring-primary/30"
+              dir="rtl"
+            />
           </div>
 
-          <span style={{ fontWeight: 300, fontSize: "0.8rem", color: "rgba(255,255,255,0.25)", marginRight: "auto" }}>
-            {processed.length} / {leads.length} לידים
+          <Button
+            variant={showFilters ? "default" : "outline"} size="sm"
+            onClick={() => setShowFilters((v) => !v)}
+            className="relative gap-1.5"
+          >
+            <SlidersHorizontal className="h-4 w-4" />
+            סינון
+            {activeFilterCount > 0 && (
+              <Badge className="absolute -right-2 -top-2 h-5 w-5 flex items-center justify-center p-0 text-xs bg-destructive">
+                {activeFilterCount}
+              </Badge>
+            )}
+          </Button>
+
+          {/* Sort */}
+          <div className="flex gap-1.5 mr-auto">
+            {([
+              { key: "business_score" as SortKey, label: "ציון" },
+              { key: "created_at" as SortKey, label: "תאריך" },
+              { key: "company_name" as SortKey, label: "שם" },
+            ]).map(({ key, label }) => (
+              <button key={key}
+                onClick={() => setSort((p) => ({ key, dir: p.key === key ? (p.dir === "asc" ? "desc" : "asc") : (key === "business_score" ? "desc" : "asc") }))}
+                className="rounded-lg px-2.5 py-1 text-xs transition-all"
+                style={{
+                  fontWeight: sort.key === key ? 700 : 400, fontFamily: F,
+                  background: sort.key === key ? "rgba(99,102,241,0.15)" : "rgba(255,255,255,0.04)",
+                  border: sort.key === key ? "1px solid rgba(99,102,241,0.3)" : "1px solid rgba(255,255,255,0.08)",
+                  color: sort.key === key ? "rgb(129,140,248)" : "rgba(255,255,255,0.35)",
+                }}>
+                {sort.key === key ? (sort.dir === "asc" ? "↑" : "↓") : "↕"} {label}
+              </button>
+            ))}
+          </div>
+
+          <span className="text-xs text-muted-foreground shrink-0" style={{ fontFamily: F }}>
+            {processed.length} / {leads.length}
           </span>
         </div>
 
-        {/* Table */}
-        <div className="flex-1 overflow-auto">
-          <table className="w-full min-w-[700px] border-collapse" dir="rtl">
-            <thead>
-              <tr className="border-b border-white/[0.06]">
-                {/* Select-all checkbox */}
-                <th className="px-4 py-3 w-8" onClick={(e) => e.stopPropagation()}>
-                  <input
-                    type="checkbox"
-                    checked={processed.length > 0 && checkedIds.size === processed.length}
-                    ref={(el) => { if (el) el.indeterminate = checkedIds.size > 0 && checkedIds.size < processed.length; }}
-                    onChange={toggleAll}
-                    className="accent-indigo-500 w-3.5 h-3.5 cursor-pointer"
+        {/* Rows */}
+        <div className="flex-1 overflow-y-auto">
+          <AnimatePresence mode="popLayout">
+            {processed.length === 0 ? (
+              <motion.div key="empty" initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+                className="p-16 text-center" style={{ color: "rgba(255,255,255,0.25)", fontFamily: F, fontSize: "0.88rem" }}>
+                לא נמצאו לידים התואמים את הסינון
+              </motion.div>
+            ) : (
+              processed.map((lead, i) => (
+                <motion.div key={lead.id} className="group"
+                  initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+                  transition={{ duration: 0.18, delay: i * 0.01 }}>
+                  <LeadRow
+                    lead={lead}
+                    expanded={expandedId === lead.id}
+                    onToggle={() => setExpandedId((c) => c === lead.id ? null : lead.id)}
+                    onOpenPanel={setSelected}
+                    checked={checkedIds.has(lead.id)}
+                    onCheck={(e) => toggleCheck(lead.id, e)}
+                    onDelete={handleDelete}
+                    confirmId={confirmId}
+                    deletingId={deletingId}
+                    onConfirm={setConfirmId}
+                    onCancelConfirm={() => setConfirmId(null)}
                   />
-                </th>
-                {COLUMNS.map(({ key, label }) => (
-                  <th
-                    key={key}
-                    onClick={() => toggleSort(key)}
-                    className="px-5 py-3 text-right cursor-pointer select-none transition-colors hover:bg-white/[0.03]"
-                    style={{ fontWeight: 700, fontSize: "0.72rem", color: sort.key === key ? "rgba(255,255,255,0.6)" : "rgba(255,255,255,0.3)", letterSpacing: "0.08em", whiteSpace: "nowrap" }}
-                  >
-                    <SortIcon active={sort.key === key} dir={sort.dir} />
-                    {label}
-                  </th>
-                ))}
-                {(["מייל", "Lemlist", ""] as const).map((h) => (
-                  <th
-                    key={h}
-                    className="px-5 py-3 text-right"
-                    style={{ fontWeight: 700, fontSize: "0.72rem", color: "rgba(255,255,255,0.3)", letterSpacing: "0.08em", whiteSpace: "nowrap" }}
-                  >
-                    {h}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {processed.length === 0 && (
-                <tr>
-                  <td colSpan={8} className="px-5 py-16 text-center"
-                    style={{ fontWeight: 300, fontSize: "0.88rem", color: "rgba(255,255,255,0.25)" }}>
-                    לא נמצאו לידים התואמים את הסינון
-                  </td>
-                </tr>
-              )}
-              {processed.map((lead) => {
-                const isSelected = selected?.id === lead.id;
-                return (
-                  <tr
-                    key={lead.id}
-                    onClick={() => setSelected(isSelected ? null : lead)}
-                    className="group border-b border-white/[0.04] cursor-pointer transition-all duration-150"
-                    style={{ background: checkedIds.has(lead.id) ? "rgba(99,102,241,0.06)" : isSelected ? "rgba(99,102,241,0.08)" : "transparent" }}
-                    onMouseEnter={(e) => { if (!isSelected && !checkedIds.has(lead.id)) (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.03)"; }}
-                    onMouseLeave={(e) => { if (!isSelected && !checkedIds.has(lead.id)) (e.currentTarget as HTMLElement).style.background = "transparent"; }}
-                  >
-                    {/* Row checkbox */}
-                    <td className="px-4 py-3.5" onClick={(e) => toggleCheck(lead.id, e)}>
-                      <input
-                        type="checkbox"
-                        checked={checkedIds.has(lead.id)}
-                        onChange={() => {}}
-                        className="accent-indigo-500 w-3.5 h-3.5 cursor-pointer"
-                      />
-                    </td>
-                    <td className="px-5 py-3.5">
-                      <span style={{ fontWeight: 700, fontSize: "0.9rem", color: "#fff" }}>{lead.company_name}</span>
-                    </td>
-                    <td className="px-5 py-3.5">
-                      <ScoreBadge score={lead.business_score} tier={lead.lead_quality} />
-                    </td>
-                    <td className="px-5 py-3.5">
-                      <AdTypeBadge type={lead.ad_type} />
-                    </td>
-                    <td className="px-5 py-3.5">
-                      <span style={{ fontWeight: 300, fontSize: "0.85rem", color: "rgba(255,255,255,0.45)" }}>{lead.niche ?? "—"}</span>
-                    </td>
-                    <td className="px-5 py-3.5">
-                      <span style={{ fontWeight: 300, fontSize: "0.8rem", color: "rgba(255,255,255,0.25)" }}>
-                        {new Date(lead.created_at).toLocaleDateString("he-IL")}
-                      </span>
-                    </td>
-                    <td className="px-5 py-3.5">
-                      <span style={{ fontWeight: 300, fontSize: "0.82rem", color: lead.email_address ? "rgba(255,255,255,0.5)" : "rgba(255,255,255,0.2)" }}>
-                        {lead.email_address ?? "לא נמצא"}
-                      </span>
-                    </td>
-                    <td className="px-5 py-3.5">
-                      <LemlistBadge status={lead.lemlist_status} />
-                    </td>
-                    <td className="px-3 py-3.5" onClick={(e) => e.stopPropagation()}>
-                      {confirmId === lead.id ? (
-                        <div className="flex items-center gap-1.5">
-                          <button
-                            onClick={() => handleDelete(lead.id)}
-                            disabled={deletingId === lead.id}
-                            className="rounded-lg px-2.5 py-1 transition-colors"
-                            style={{ fontFamily: F, fontWeight: 600, fontSize: "0.75rem", background: "rgba(239,68,68,0.15)", border: "1px solid rgba(239,68,68,0.3)", color: "rgb(248,113,113)" }}
-                          >
-                            {deletingId === lead.id ? "..." : "מחק"}
-                          </button>
-                          <button
-                            onClick={() => setConfirmId(null)}
-                            className="rounded-lg px-2 py-1 transition-colors hover:bg-white/[0.06]"
-                            style={{ fontFamily: F, fontWeight: 400, fontSize: "0.75rem", color: "rgba(255,255,255,0.3)" }}
-                          >
-                            ביטול
-                          </button>
-                        </div>
-                      ) : (
-                        <button
-                          onClick={() => setConfirmId(lead.id)}
-                          className="rounded-lg p-1.5 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-white/[0.06]"
-                          style={{ color: "rgba(255,255,255,0.25)", fontSize: "0.9rem", lineHeight: 1 }}
-                          title="מחק ליד"
-                        >
-                          🗑
-                        </button>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                </motion.div>
+              ))
+            )}
+          </AnimatePresence>
         </div>
       </div>
 
-      {/* Bulk action bar */}
+      {/* Side filter panel */}
+      <AnimatePresence initial={false}>
+        {showFilters && (
+          <motion.div key="filters"
+            initial={{ width: 0, opacity: 0 }} animate={{ width: 260, opacity: 1 }} exit={{ width: 0, opacity: 0 }}
+            transition={{ duration: 0.22 }} className="overflow-hidden shrink-0">
+            <FilterPanel filters={filters} onChange={setFilters} niches={niches} />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Bulk bar */}
       <AnimatePresence>
         {checkedIds.size > 0 && (
           <motion.div
-            initial={{ y: 80, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: 80, opacity: 0 }}
+            initial={{ y: 80, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 80, opacity: 0 }}
             transition={{ type: "spring", damping: 26, stiffness: 300 }}
-            className="fixed bottom-6 left-1/2 z-50 flex items-center gap-3 px-5 py-3 rounded-2xl"
-            style={{
-              transform: "translateX(-50%)",
-              background: "#111",
-              border: "1px solid rgba(255,255,255,0.12)",
-              boxShadow: "0 16px 48px rgba(0,0,0,0.7)",
-              fontFamily: F,
-            }}
+            className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 px-5 py-3 rounded-2xl"
+            style={{ background: "#111", border: "1px solid rgba(255,255,255,0.12)", boxShadow: "0 16px 48px rgba(0,0,0,0.7)", fontFamily: F }}
             dir="rtl"
           >
-            <span style={{ fontWeight: 700, fontSize: "0.85rem", color: "rgba(255,255,255,0.7)" }}>
-              {checkedIds.size} נבחרו
-            </span>
+            <span style={{ fontWeight: 700, fontSize: "0.85rem", color: "rgba(255,255,255,0.7)" }}>{checkedIds.size} נבחרו</span>
             <div style={{ width: "1px", height: "20px", background: "rgba(255,255,255,0.1)" }} />
-
-            {/* Archive / Restore */}
-            <button
-              onClick={() => handleBulkAction(mode === "archive" ? "restore" : "archive")}
-              disabled={bulkLoading}
+            <button onClick={() => handleBulkAction(mode === "archive" ? "restore" : "archive")} disabled={bulkLoading}
               className="rounded-xl px-4 py-1.5 transition-all disabled:opacity-40"
-              style={{
-                fontWeight: 600, fontSize: "0.82rem",
-                background: mode === "archive" ? "rgba(74,222,128,0.1)" : "rgba(250,204,21,0.1)",
-                border: mode === "archive" ? "1px solid rgba(74,222,128,0.25)" : "1px solid rgba(250,204,21,0.25)",
-                color: mode === "archive" ? "rgb(74,222,128)" : "rgb(250,204,21)",
-              }}
-            >
+              style={{ fontWeight: 600, fontSize: "0.82rem", background: mode === "archive" ? "rgba(74,222,128,0.1)" : "rgba(250,204,21,0.1)", border: mode === "archive" ? "1px solid rgba(74,222,128,0.25)" : "1px solid rgba(250,204,21,0.25)", color: mode === "archive" ? "rgb(74,222,128)" : "rgb(250,204,21)" }}>
               {bulkLoading ? "..." : mode === "archive" ? "↩️ שחזר" : "📦 ארכיון"}
             </button>
-
-            {/* Delete with confirm */}
             {!bulkConfirm ? (
-              <button
-                onClick={() => setBulkConfirm(true)}
-                disabled={bulkLoading}
+              <button onClick={() => setBulkConfirm(true)} disabled={bulkLoading}
                 className="rounded-xl px-4 py-1.5 transition-all disabled:opacity-40"
-                style={{
-                  fontWeight: 600, fontSize: "0.82rem",
-                  background: "rgba(239,68,68,0.1)",
-                  border: "1px solid rgba(239,68,68,0.25)",
-                  color: "rgb(248,113,113)",
-                }}
-              >
+                style={{ fontWeight: 600, fontSize: "0.82rem", background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.25)", color: "rgb(248,113,113)" }}>
                 🗑 מחק
               </button>
             ) : (
               <div className="flex items-center gap-2">
                 <span style={{ fontSize: "0.8rem", color: "rgba(255,255,255,0.5)" }}>בטוח?</span>
-                <button
-                  onClick={() => handleBulkAction("delete")}
-                  disabled={bulkLoading}
+                <button onClick={() => handleBulkAction("delete")} disabled={bulkLoading}
                   className="rounded-xl px-3 py-1.5 transition-all disabled:opacity-40"
-                  style={{
-                    fontWeight: 700, fontSize: "0.82rem",
-                    background: "rgba(239,68,68,0.2)",
-                    border: "1px solid rgba(239,68,68,0.4)",
-                    color: "rgb(248,113,113)",
-                  }}
-                >
+                  style={{ fontWeight: 700, fontSize: "0.82rem", background: "rgba(239,68,68,0.2)", border: "1px solid rgba(239,68,68,0.4)", color: "rgb(248,113,113)" }}>
                   {bulkLoading ? "..." : "כן, מחק"}
                 </button>
-                <button
-                  onClick={() => setBulkConfirm(false)}
+                <button onClick={() => setBulkConfirm(false)}
                   className="rounded-xl px-3 py-1.5 transition-all hover:bg-white/[0.06]"
-                  style={{ fontWeight: 400, fontSize: "0.82rem", color: "rgba(255,255,255,0.35)" }}
-                >
+                  style={{ fontWeight: 400, fontSize: "0.82rem", color: "rgba(255,255,255,0.35)" }}>
                   ביטול
                 </button>
               </div>
             )}
-
-            {/* Clear selection */}
-            <button
-              onClick={() => { setCheckedIds(new Set()); setBulkConfirm(false); }}
+            <button onClick={() => { setCheckedIds(new Set()); setBulkConfirm(false); }}
               className="rounded-lg p-1 hover:bg-white/[0.07] transition-colors"
-              style={{ color: "rgba(255,255,255,0.3)", fontSize: "0.9rem", lineHeight: 1 }}
-            >
-              ✕
-            </button>
+              style={{ color: "rgba(255,255,255,0.3)", lineHeight: 1 }}>✕</button>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Slide-in panel */}
+      {/* Lead panel */}
       <AnimatePresence>
         {selected && (
-          <LeadPanel
-            lead={selected}
-            onClose={() => setSelected(null)}
+          <LeadPanel lead={selected} onClose={() => setSelected(null)}
             onEmailGenerated={(id, draft) => {
               setLeads((prev) => prev.map((l) => l.id === id ? { ...l, hebrew_email_draft: draft } : l));
               setSelected((prev) => prev?.id === id ? { ...prev, hebrew_email_draft: draft } : prev);
