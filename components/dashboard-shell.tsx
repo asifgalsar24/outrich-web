@@ -99,42 +99,55 @@ export default function DashboardShell({
           {navItems.map((item) => {
             const active = pathname === item.href;
             return (
-              <Link
+              <motion.div
                 key={item.href}
-                href={item.href}
-                className="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200"
-                style={{
-                  fontWeight: active ? 700 : 400,
-                  fontSize: "0.9rem",
-                  color: active ? "#fff" : "rgba(255,255,255,0.42)",
-                  background: active
-                    ? "rgba(255,255,255,0.08)"
-                    : "transparent",
-                  border: active
-                    ? "1px solid rgba(255,255,255,0.12)"
-                    : "1px solid transparent",
-                  backdropFilter: active ? "blur(8px)" : "none",
-                  boxShadow: active
-                    ? "inset 1px 1px 0 rgba(255,255,255,0.1), inset -1px -1px 0 rgba(255,255,255,0.03)"
-                    : "none",
-                }}
+                className="relative"
+                whileHover={{ x: -2 }}
+                whileTap={{ scale: 0.97 }}
+                transition={{ type: "spring", stiffness: 400, damping: 25 }}
               >
-                <span style={{ fontSize: "0.85rem", opacity: 0.7 }}>{item.icon}</span>
-                {item.label}
-              </Link>
+                {/* Sliding active pill — animates between nav items */}
+                {active && (
+                  <motion.div
+                    layoutId="nav-active"
+                    className="absolute inset-0 rounded-xl"
+                    style={{
+                      background: "rgba(255,255,255,0.08)",
+                      border: "1px solid rgba(255,255,255,0.12)",
+                      backdropFilter: "blur(8px)",
+                      boxShadow: "inset 1px 1px 0 rgba(255,255,255,0.1), inset -1px -1px 0 rgba(255,255,255,0.03)",
+                    }}
+                    transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                  />
+                )}
+                <Link
+                  href={item.href}
+                  className="relative flex items-center gap-3 px-3 py-2.5 rounded-xl"
+                  style={{
+                    fontWeight: active ? 700 : 400,
+                    fontSize: "0.9rem",
+                    color: active ? "#fff" : "rgba(255,255,255,0.42)",
+                  }}
+                >
+                  <span style={{ fontSize: "0.85rem", opacity: 0.7 }}>{item.icon}</span>
+                  {item.label}
+                </Link>
+              </motion.div>
             );
           })}
         </nav>
 
         {/* Back to site */}
         <div className="px-3 pb-2">
-          <Link
-            href="/"
-            className="flex items-center gap-2 px-3 py-2 rounded-xl transition-colors hover:bg-white/[0.05]"
-            style={{ fontWeight: 300, fontSize: "0.8rem", color: "rgba(255,255,255,0.25)" }}
-          >
-            ← חזרה לאתר
-          </Link>
+          <motion.div whileHover={{ x: -2 }} whileTap={{ scale: 0.97 }} transition={{ type: "spring", stiffness: 400, damping: 25 }}>
+            <Link
+              href="/"
+              className="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-white/[0.05] transition-colors"
+              style={{ fontWeight: 300, fontSize: "0.8rem", color: "rgba(255,255,255,0.25)" }}
+            >
+              ← חזרה לאתר
+            </Link>
+          </motion.div>
         </div>
 
         {/* User */}
@@ -145,14 +158,17 @@ export default function DashboardShell({
           >
             {user.email}
           </p>
-          <button
+          <motion.button
             onClick={signOut}
             disabled={signingOut}
-            className="w-full text-right rounded-lg px-3 py-2 transition-colors hover:bg-white/[0.05]"
+            whileHover={!signingOut ? { x: -2 } : {}}
+            whileTap={!signingOut ? { scale: 0.96 } : {}}
+            transition={{ type: "spring", stiffness: 400, damping: 25 }}
+            className="w-full text-right rounded-lg px-3 py-2 hover:bg-white/[0.05] transition-colors"
             style={{ fontWeight: 400, fontSize: "0.8rem", color: "rgba(255,255,255,0.3)" }}
           >
             {signingOut ? "יוצא..." : "יציאה"}
-          </button>
+          </motion.button>
         </div>
       </aside>
 
@@ -176,29 +192,43 @@ export default function DashboardShell({
         {navItems.map((item) => {
           const active = pathname === item.href;
           return (
-            <Link
+            <motion.div
               key={item.href}
-              href={item.href}
-              className="flex flex-col items-center justify-center gap-0.5 flex-1 h-full transition-colors"
-              style={{
-                color: active ? "rgb(129,140,248)" : "rgba(255,255,255,0.3)",
-                background: active ? "rgba(99,102,241,0.07)" : "transparent",
-              }}
+              className="flex-1 h-full"
+              whileTap={{ scale: 0.88 }}
+              transition={{ type: "spring", stiffness: 500, damping: 25 }}
             >
-              <span style={{ fontSize: "1rem" }}>{item.icon}</span>
-              <span style={{ fontSize: "0.65rem", fontWeight: active ? 700 : 400 }}>{item.label}</span>
-            </Link>
+              <Link
+                href={item.href}
+                className="flex flex-col items-center justify-center gap-0.5 w-full h-full"
+                style={{
+                  color: active ? "rgb(129,140,248)" : "rgba(255,255,255,0.3)",
+                  background: active ? "rgba(99,102,241,0.07)" : "transparent",
+                }}
+              >
+                <motion.span
+                  animate={active ? { scale: [1, 1.2, 1] } : { scale: 1 }}
+                  transition={{ duration: 0.3 }}
+                  style={{ fontSize: "1rem", display: "block" }}
+                >
+                  {item.icon}
+                </motion.span>
+                <span style={{ fontSize: "0.65rem", fontWeight: active ? 700 : 400 }}>{item.label}</span>
+              </Link>
+            </motion.div>
           );
         })}
-        <button
+        <motion.button
           onClick={signOut}
           disabled={signingOut}
-          className="flex flex-col items-center justify-center gap-0.5 flex-1 h-full transition-colors"
+          whileTap={{ scale: 0.88 }}
+          transition={{ type: "spring", stiffness: 500, damping: 25 }}
+          className="flex flex-col items-center justify-center gap-0.5 flex-1 h-full"
           style={{ color: "rgba(255,255,255,0.25)", background: "transparent" }}
         >
           <span style={{ fontSize: "1rem" }}>⏻</span>
           <span style={{ fontSize: "0.65rem", fontWeight: 400 }}>{signingOut ? "..." : "יציאה"}</span>
-        </button>
+        </motion.button>
       </nav>
     </div>
   );
