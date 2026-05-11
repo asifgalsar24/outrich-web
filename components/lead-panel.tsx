@@ -60,6 +60,23 @@ export function AdTypeBadge({ type }: { type: string | null }) {
   );
 }
 
+type ResearchCardType = "strength" | "gap" | "observation" | "note";
+const RESEARCH_CARD_STYLES: Record<ResearchCardType, { border: string; bg: string; label: string; color: string }> = {
+  strength:    { border: "rgba(74,222,128,0.3)",   bg: "rgba(74,222,128,0.06)",   label: "חוזק",   color: "rgb(74,222,128)"   },
+  gap:         { border: "rgba(248,113,113,0.3)",  bg: "rgba(248,113,113,0.06)",  label: "פער",    color: "rgb(248,113,113)"  },
+  observation: { border: "rgba(99,102,241,0.35)",  bg: "rgba(99,102,241,0.07)",   label: "תצפית",  color: "rgb(129,140,248)"  },
+  note:        { border: "rgba(255,255,255,0.06)", bg: "rgba(255,255,255,0.03)",  label: "",       color: "rgba(255,255,255,0.5)" },
+};
+
+function parseResearch(text: string): Array<{ type: ResearchCardType; emoji: string; text: string }> {
+  return text.split("\n").map(l => l.trim()).filter(Boolean).map(line => {
+    if (line.startsWith("✅")) return { type: "strength",    emoji: "✅", text: line.replace(/^✅\s*/, "") };
+    if (line.startsWith("❌")) return { type: "gap",         emoji: "❌", text: line.replace(/^❌\s*/, "") };
+    if (line.startsWith("👁")) return { type: "observation", emoji: "👁", text: line.replace(/^👁\s*/, "") };
+    return { type: "note", emoji: "", text: line };
+  });
+}
+
 function CopyButton({ text }: { text: string }) {
   const [copied, setCopied] = useState(false);
   async function copy() {
@@ -102,6 +119,12 @@ export default function LeadPanel({
   const [saveStatus, setSaveStatus] = useState<"idle" | "saved" | "error">("idle");
   const [generating, setGenerating] = useState(false);
   const [generateError, setGenerateError] = useState("");
+  const [lemlistStatus, setLemlistStatus] = useState<"idle" | "loading" | "sent" | "error">(
+    lead.lemlist_status === "sent" ? "sent" : "idle"
+  ); // reused for Instantly status
+  const [lemlistError, setLemlistError] = useState("");
+  const [igCopied, setIgCopied]   = useState(false);
+  const [fbCopied, setFbCopied]   = useState(false);
   const isDirty = emailText !== savedText;
 
   async function handleGenerateEmail() {
@@ -145,6 +168,31 @@ export default function LeadPanel({
     }
     setSaving(false);
     setTimeout(() => setSaveStatus("idle"), 2500);
+  }
+
+  async function handlePushLemlist() {
+    setLemlistStatus("loading");
+    setLemlistError("");
+    try {
+      const res = await fetch(`/api/leads/${lead.id}/push-instantly`, { method: "POST" });
+      const data = await res.json();
+      if (res.ok) {
+        setLemlistStatus("sent");
+      } else {
+        setLemlistStatus("error");
+        setLemlistError(data.error ?? "שגיאה לא ידועה");
+      }
+    } catch {
+      setLemlistStatus("error");
+      setLemlistError("שגיאת רשת");
+    }
+  }
+
+  async function handleCopyAndOpen(url: string, setFlag: (v: boolean) => void) {
+    try { await navigator.clipboard.writeText(emailText); } catch {}
+    setFlag(true);
+    setTimeout(() => setFlag(false), 1800);
+    window.open(url, "_blank", "noopener,noreferrer");
   }
 
   return (
@@ -301,16 +349,32 @@ export default function LeadPanel({
           </section>
         )}
 
-        {/* Perplexity research */}
+        {/* Research — parsed into cards */}
         {lead.perplexity_research && (
           <section>
             <p style={{ fontWeight: 700, fontSize: "0.78rem", color: "rgba(255,255,255,0.3)", letterSpacing: "0.1em" }} className="uppercase mb-3">
-              מחקר Perplexity
+              מחקר
             </p>
-            <div className="rounded-xl p-4" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}>
-              <p style={{ fontWeight: 300, fontSize: "0.88rem", color: "rgba(255,255,255,0.6)", lineHeight: 1.75, whiteSpace: "pre-wrap" }}>
-                {lead.perplexity_research}
-              </p>
+            <div className="flex flex-col gap-2">
+              {parseResearch(lead.perplexity_research).map((card, i) => {
+                const s = RESEARCH_CARD_STYLES[card.type];
+                return (
+                  <div
+                    key={i}
+                    className="rounded-xl px-4 py-3"
+                    style={{ background: s.bg, border: `1px solid ${s.border}`, borderRight: `3px solid ${s.border}` }}
+                  >
+                    {card.emoji && (
+                      <p style={{ fontWeight: 700, fontSize: "0.72rem", color: s.color, marginBottom: "0.25rem", letterSpacing: "0.06em" }}>
+                        {card.emoji} {s.label}
+                      </p>
+                    )}
+                    <p style={{ fontWeight: 300, fontSize: "0.86rem", color: "rgba(255,255,255,0.7)", lineHeight: 1.65 }}>
+                      {card.text}
+                    </p>
+                  </div>
+                );
+              })}
             </div>
           </section>
         )}
@@ -370,69 +434,118 @@ export default function LeadPanel({
             dir="rtl"
           />
 
-          <div className="flex items-center gap-2 mt-2 justify-between">
-            <div className="flex items-center gap-2">
-              {emailText && (
-                <button
-                  onClick={handleGenerateEmail}
-                  disabled={generating}
-                  className="rounded-xl px-3 py-2 transition-all disabled:opacity-40"
-                  style={{
-                    fontFamily: F, fontWeight: 400, fontSize: "0.78rem",
-                    background: "rgba(255,255,255,0.04)",
-                    border: "1px solid rgba(255,255,255,0.1)",
-                    color: "rgba(255,255,255,0.35)",
-                  }}
-                >
-                  {generating ? "✍️..." : "↺ צור מחדש"}
-                </button>
-              )}
-              <motion.button
-                onClick={handleSaveEmail}
-                disabled={!isDirty || saving}
-                whileHover={isDirty && !saving ? { scale: 1.04, y: -1 } : {}}
-                whileTap={isDirty && !saving ? { scale: 0.96 } : {}}
-                className="rounded-xl px-4 py-2 transition-all disabled:opacity-40"
+          {/* Save / regenerate row */}
+          <div className="flex items-center gap-2 mt-2">
+            {emailText && (
+              <button
+                onClick={handleGenerateEmail}
+                disabled={generating}
+                className="rounded-xl px-3 py-2 transition-all disabled:opacity-40"
                 style={{
-                  fontFamily: F, fontWeight: 700, fontSize: "0.82rem",
-                  background: saveStatus === "saved" ? "rgba(74,222,128,0.15)"
-                    : saveStatus === "error" ? "rgba(239,68,68,0.15)"
-                    : "rgba(99,102,241,0.2)",
-                  border: saveStatus === "saved" ? "1px solid rgba(74,222,128,0.3)"
-                    : saveStatus === "error" ? "1px solid rgba(239,68,68,0.3)"
-                    : "1px solid rgba(99,102,241,0.35)",
-                  color: saveStatus === "saved" ? "rgb(74,222,128)"
-                    : saveStatus === "error" ? "rgb(248,113,113)"
-                    : "rgb(129,140,248)",
+                  fontFamily: F, fontWeight: 400, fontSize: "0.78rem",
+                  background: "rgba(255,255,255,0.04)",
+                  border: "1px solid rgba(255,255,255,0.1)",
+                  color: "rgba(255,255,255,0.35)",
                 }}
               >
-                {saving ? "שומר..." : saveStatus === "saved" ? "✓ נשמר" : saveStatus === "error" ? "שגיאה" : "שמור"}
-              </motion.button>
-            </div>
+                {generating ? "✍️..." : "↺ צור מחדש"}
+              </button>
+            )}
+            <motion.button
+              onClick={handleSaveEmail}
+              disabled={!isDirty || saving}
+              whileHover={isDirty && !saving ? { scale: 1.04, y: -1 } : {}}
+              whileTap={isDirty && !saving ? { scale: 0.96 } : {}}
+              className="rounded-xl px-4 py-2 transition-all disabled:opacity-40"
+              style={{
+                fontFamily: F, fontWeight: 700, fontSize: "0.82rem",
+                background: saveStatus === "saved" ? "rgba(74,222,128,0.15)"
+                  : saveStatus === "error" ? "rgba(239,68,68,0.15)"
+                  : "rgba(99,102,241,0.2)",
+                border: saveStatus === "saved" ? "1px solid rgba(74,222,128,0.3)"
+                  : saveStatus === "error" ? "1px solid rgba(239,68,68,0.3)"
+                  : "1px solid rgba(99,102,241,0.35)",
+                color: saveStatus === "saved" ? "rgb(74,222,128)"
+                  : saveStatus === "error" ? "rgb(248,113,113)"
+                  : "rgb(129,140,248)",
+              }}
+            >
+              {saving ? "שומר..." : saveStatus === "saved" ? "✓ נשמר" : saveStatus === "error" ? "שגיאה" : "שמור"}
+            </motion.button>
+          </div>
 
-            {emailText && (
-              lead.email_address ? (
-                <a
-                  href={`mailto:${lead.email_address}?subject=שיתוף פעולה - ${encodeURIComponent(lead.company_name)}&body=${encodeURIComponent(emailText)}`}
-                  className="rounded-xl px-4 py-2 transition-all"
+          {/* Send buttons row */}
+          {emailText && (
+            <div className="flex flex-wrap items-center gap-2 mt-3 pt-3" style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+
+              {/* Lemlist */}
+              <motion.button
+                onClick={handlePushLemlist}
+                disabled={lemlistStatus === "loading" || lemlistStatus === "sent" || !lead.email_address}
+                whileHover={lemlistStatus === "idle" && !!lead.email_address ? { scale: 1.04, boxShadow: "0 0 16px rgba(74,222,128,0.3)" } : {}}
+                whileTap={lemlistStatus === "idle" && !!lead.email_address ? { scale: 0.96 } : {}}
+                title={!lead.email_address ? "אין כתובת מייל" : undefined}
+                className="rounded-xl px-4 py-2 disabled:opacity-50"
+                style={{
+                  fontFamily: F, fontWeight: 700, fontSize: "0.82rem",
+                  background: lemlistStatus === "sent" ? "rgba(74,222,128,0.15)"
+                    : lemlistStatus === "error" ? "rgba(239,68,68,0.12)"
+                    : "rgba(74,222,128,0.1)",
+                  border: lemlistStatus === "sent" ? "1px solid rgba(74,222,128,0.4)"
+                    : lemlistStatus === "error" ? "1px solid rgba(239,68,68,0.3)"
+                    : "1px solid rgba(74,222,128,0.25)",
+                  color: lemlistStatus === "sent" ? "rgb(74,222,128)"
+                    : lemlistStatus === "error" ? "rgb(248,113,113)"
+                    : "rgb(74,222,128)",
+                }}
+              >
+                {lemlistStatus === "loading" ? "שולח..." : lemlistStatus === "sent" ? "✓ נשלח!" : "💰 Make Me Rich"}
+              </motion.button>
+
+              {/* Instagram DM */}
+              {lead.instagram_page && (
+                <motion.button
+                  onClick={() => handleCopyAndOpen(lead.instagram_page!, setIgCopied)}
+                  whileHover={{ scale: 1.04 }}
+                  whileTap={{ scale: 0.96 }}
+                  className="rounded-xl px-4 py-2"
                   style={{
                     fontFamily: F, fontWeight: 700, fontSize: "0.82rem",
-                    background: "rgba(74,222,128,0.12)",
-                    border: "1px solid rgba(74,222,128,0.3)",
-                    color: "rgb(74,222,128)",
-                    textDecoration: "none",
-                    display: "inline-block",
+                    background: igCopied ? "rgba(99,102,241,0.15)" : "rgba(255,255,255,0.05)",
+                    border: igCopied ? "1px solid rgba(99,102,241,0.35)" : "1px solid rgba(255,255,255,0.1)",
+                    color: igCopied ? "rgb(129,140,248)" : "rgba(255,255,255,0.55)",
                   }}
                 >
-                  📤 שלח מייל
-                </a>
-              ) : (
-                <span style={{ fontWeight: 300, fontSize: "0.78rem", color: "rgba(255,255,255,0.2)" }}>
-                  אין כתובת מייל
-                </span>
-              )
-            )}
-          </div>
+                  {igCopied ? "✓ הועתק" : "📸 Instagram DM"}
+                </motion.button>
+              )}
+
+              {/* Facebook */}
+              {lead.facebook_page && (
+                <motion.button
+                  onClick={() => handleCopyAndOpen(lead.facebook_page!, setFbCopied)}
+                  whileHover={{ scale: 1.04 }}
+                  whileTap={{ scale: 0.96 }}
+                  className="rounded-xl px-4 py-2"
+                  style={{
+                    fontFamily: F, fontWeight: 700, fontSize: "0.82rem",
+                    background: fbCopied ? "rgba(99,102,241,0.15)" : "rgba(255,255,255,0.05)",
+                    border: fbCopied ? "1px solid rgba(99,102,241,0.35)" : "1px solid rgba(255,255,255,0.1)",
+                    color: fbCopied ? "rgb(129,140,248)" : "rgba(255,255,255,0.55)",
+                  }}
+                >
+                  {fbCopied ? "✓ הועתק" : "📘 Facebook"}
+                </motion.button>
+              )}
+
+              {lemlistError && (
+                <p style={{ width: "100%", fontWeight: 300, fontSize: "0.75rem", color: "rgb(248,113,113)", marginTop: "0.25rem" }}>
+                  ⚠️ {lemlistError}
+                </p>
+              )}
+            </div>
+          )}
+
         </section>
 
       </div>

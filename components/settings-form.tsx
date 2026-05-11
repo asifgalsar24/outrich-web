@@ -19,6 +19,8 @@ type Settings = {
   cta_style: string;
   portfolio_url: string;
   portfolio_description: string;
+  instantly_api_key: string;
+  instantly_campaign_id: string;
 };
 
 const DEFAULTS: Settings = {
@@ -33,6 +35,8 @@ const DEFAULTS: Settings = {
   cta_style: "question",
   portfolio_url: "",
   portfolio_description: "",
+  instantly_api_key: "",
+  instantly_campaign_id: "",
 };
 
 const CTA_OPTIONS = [
@@ -287,6 +291,46 @@ export default function SettingsForm({
               dir="rtl"
             />
             <p style={hintStyle}>משפט שיבוא לפני הלינק במייל — נשמע טבעי ולא כמו פרסומת</p>
+          </div>
+        </section>
+      </GlassEffect>
+
+      {/* ── Section 5: Integrations ────────────────────────── */}
+      <GlassEffect className="rounded-2xl" interactive>
+        <section className="p-6 flex flex-col gap-5">
+          <div>
+            <p style={{ fontWeight: 800, fontSize: "1rem", color: "#fff" }}>אינטגרציות</p>
+            <p style={{ fontWeight: 300, fontSize: "0.8rem", color: "rgba(255,255,255,0.3)", marginTop: "2px" }}>
+              חבר את Instantly.ai כדי לשלוח מיילים בלחיצה אחת מתוך הפאנל
+            </p>
+          </div>
+
+          <div>
+            <label style={labelStyle}>Instantly API Key (v2)</label>
+            <input
+              type="password"
+              value={form.instantly_api_key}
+              onChange={(e) => set("instantly_api_key", e.target.value)}
+              placeholder="inst_..."
+              className={inputClass}
+              style={{ fontFamily: F, direction: "ltr", textAlign: "left" }}
+              autoComplete="off"
+            />
+            <p style={hintStyle}>Instantly → Settings → API Keys → Create API Key (v2)</p>
+          </div>
+
+          <div>
+            <label style={labelStyle}>Instantly Campaign ID</label>
+            <input
+              type="text"
+              value={form.instantly_campaign_id}
+              onChange={(e) => set("instantly_campaign_id", e.target.value)}
+              placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+              className={inputClass}
+              style={{ fontFamily: F, direction: "ltr", textAlign: "left" }}
+              autoComplete="off"
+            />
+            <p style={hintStyle}>פתח את הקמפיין ב-Instantly — ה-ID מופיע ב-URL של הקמפיין</p>
           </div>
         </section>
       </GlassEffect>
