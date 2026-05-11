@@ -118,13 +118,17 @@ export default function LeadPanel({
   const [saving, setSaving]         = useState(false);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saved" | "error">("idle");
   const [generating, setGenerating] = useState(false);
+  const [generatingDm, setGeneratingDm] = useState(false);
   const [generateError, setGenerateError] = useState("");
   const [lemlistStatus, setLemlistStatus] = useState<"idle" | "loading" | "sent" | "error">(
     lead.lemlist_status === "sent" ? "sent" : "idle"
-  ); // reused for Instantly status
+  );
   const [lemlistError, setLemlistError] = useState("");
   const [igCopied, setIgCopied]   = useState(false);
   const [fbCopied, setFbCopied]   = useState(false);
+  const [igUrl, setIgUrl]         = useState(lead.instagram_page ?? "");
+  const [igInput, setIgInput]     = useState("");
+  const [savingIg, setSavingIg]   = useState(false);
   const isDirty = emailText !== savedText;
 
   async function handleGenerateEmail() {
@@ -186,6 +190,41 @@ export default function LeadPanel({
       setLemlistStatus("error");
       setLemlistError("שגיאת רשת");
     }
+  }
+
+  async function handleGenerateDm() {
+    setGeneratingDm(true);
+    setGenerateError("");
+    try {
+      const res = await fetch(`/api/leads/${lead.id}/write-dm`, { method: "POST" });
+      if (res.ok) {
+        const data = await res.json();
+        const draft = data.dm_draft ?? "";
+        setEmailText(draft);
+        setSavedText(draft);
+        onEmailGenerated?.(lead.id, draft);
+      } else {
+        const err = await res.json().catch(() => ({}));
+        setGenerateError(err.error || `שגיאה (${res.status})`);
+      }
+    } catch {
+      setGenerateError("שגיאת רשת — נסה שוב");
+    }
+    setGeneratingDm(false);
+  }
+
+  async function handleSaveIg() {
+    if (!igInput.trim()) return;
+    setSavingIg(true);
+    try {
+      const res = await fetch(`/api/leads/${lead.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ instagram_page: igInput.trim() }),
+      });
+      if (res.ok) setIgUrl(igInput.trim());
+    } catch {}
+    setSavingIg(false);
   }
 
   async function handleCopyAndOpen(url: string, setFlag: (v: boolean) => void) {
@@ -257,8 +296,8 @@ export default function LeadPanel({
               📘 פייסבוק
             </a>
           )}
-          {lead.instagram_page && (
-            <a href={lead.instagram_page} target="_blank" rel="noopener noreferrer"
+          {igUrl && (
+            <a href={igUrl} target="_blank" rel="noopener noreferrer"
               className="rounded-lg px-3 py-1.5 transition-colors hover:bg-white/[0.08]"
               style={{ fontWeight: 400, fontSize: "0.8rem", color: "rgb(129,140,248)", background: "rgba(99,102,241,0.08)", border: "1px solid rgba(99,102,241,0.2)" }}>
               📸 אינסטגרם
@@ -272,6 +311,40 @@ export default function LeadPanel({
             </a>
           )}
         </div>
+
+        {/* Manual Instagram URL input */}
+        {!igUrl && (
+          <div className="flex items-center gap-2">
+            <input
+              type="text"
+              value={igInput}
+              onChange={(e) => setIgInput(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleSaveIg()}
+              placeholder="📸 הדבק קישור אינסטגרם..."
+              className="flex-1 rounded-lg px-3 py-1.5 outline-none"
+              style={{
+                fontFamily: F, fontSize: "0.8rem",
+                background: "rgba(255,255,255,0.04)",
+                border: "1px solid rgba(255,255,255,0.08)",
+                color: "rgba(255,255,255,0.6)",
+              }}
+              dir="ltr"
+            />
+            <button
+              onClick={handleSaveIg}
+              disabled={!igInput.trim() || savingIg}
+              className="rounded-lg px-3 py-1.5 transition-colors disabled:opacity-40"
+              style={{
+                fontFamily: F, fontWeight: 700, fontSize: "0.78rem",
+                background: "rgba(99,102,241,0.1)",
+                border: "1px solid rgba(99,102,241,0.25)",
+                color: "rgb(129,140,248)",
+              }}
+            >
+              {savingIg ? "..." : "שמור"}
+            </button>
+          </div>
+        )}
 
         {/* Ad copy */}
         {lead.ad_copy && (
@@ -397,21 +470,38 @@ export default function LeadPanel({
           </div>
 
           {!emailText && (
-            <motion.button
-              onClick={handleGenerateEmail}
-              disabled={generating}
-              whileHover={!generating ? { scale: 1.02, boxShadow: "0 0 20px rgba(99,102,241,0.3)" } : {}}
-              whileTap={!generating ? { scale: 0.97 } : {}}
-              className="w-full rounded-xl py-3 mb-3 transition-all disabled:opacity-60"
-              style={{
-                fontFamily: F, fontWeight: 700, fontSize: "0.88rem",
-                background: "rgba(99,102,241,0.12)",
-                border: "1px dashed rgba(99,102,241,0.4)",
-                color: generating ? "rgba(129,140,248,0.6)" : "rgb(129,140,248)",
-              }}
-            >
-              {generating ? "✍️ כותב מייל..." : "✨ צור מסר אישי"}
-            </motion.button>
+            <div className="flex gap-2 mb-3">
+              <motion.button
+                onClick={handleGenerateEmail}
+                disabled={generating || generatingDm}
+                whileHover={!generating && !generatingDm ? { scale: 1.02, boxShadow: "0 0 20px rgba(99,102,241,0.3)" } : {}}
+                whileTap={!generating && !generatingDm ? { scale: 0.97 } : {}}
+                className="flex-1 rounded-xl py-3 transition-all disabled:opacity-60"
+                style={{
+                  fontFamily: F, fontWeight: 700, fontSize: "0.88rem",
+                  background: "rgba(99,102,241,0.12)",
+                  border: "1px dashed rgba(99,102,241,0.4)",
+                  color: generating ? "rgba(129,140,248,0.6)" : "rgb(129,140,248)",
+                }}
+              >
+                {generating ? "✍️ כותב..." : "✨ צור מסר אישי"}
+              </motion.button>
+              <motion.button
+                onClick={handleGenerateDm}
+                disabled={generating || generatingDm}
+                whileHover={!generating && !generatingDm ? { scale: 1.02, boxShadow: "0 0 16px rgba(99,102,241,0.2)" } : {}}
+                whileTap={!generating && !generatingDm ? { scale: 0.97 } : {}}
+                className="rounded-xl px-4 py-3 transition-all disabled:opacity-60"
+                style={{
+                  fontFamily: F, fontWeight: 700, fontSize: "0.88rem",
+                  background: "rgba(255,255,255,0.04)",
+                  border: "1px dashed rgba(255,255,255,0.15)",
+                  color: generatingDm ? "rgba(255,255,255,0.4)" : "rgba(255,255,255,0.55)",
+                }}
+              >
+                {generatingDm ? "📱..." : "📱 DM"}
+              </motion.button>
+            </div>
           )}
           {generateError && (
             <p style={{ fontSize: "0.78rem", color: "rgb(248,113,113)", marginBottom: "0.5rem" }}>
@@ -439,7 +529,7 @@ export default function LeadPanel({
             {emailText && (
               <button
                 onClick={handleGenerateEmail}
-                disabled={generating}
+                disabled={generating || generatingDm}
                 className="rounded-xl px-3 py-2 transition-all disabled:opacity-40"
                 style={{
                   fontFamily: F, fontWeight: 400, fontSize: "0.78rem",
@@ -448,7 +538,22 @@ export default function LeadPanel({
                   color: "rgba(255,255,255,0.35)",
                 }}
               >
-                {generating ? "✍️..." : "↺ צור מחדש"}
+                {generating ? "✍️..." : "↺ מייל"}
+              </button>
+            )}
+            {emailText && (
+              <button
+                onClick={handleGenerateDm}
+                disabled={generating || generatingDm}
+                className="rounded-xl px-3 py-2 transition-all disabled:opacity-40"
+                style={{
+                  fontFamily: F, fontWeight: 400, fontSize: "0.78rem",
+                  background: "rgba(255,255,255,0.04)",
+                  border: "1px solid rgba(255,255,255,0.1)",
+                  color: "rgba(255,255,255,0.35)",
+                }}
+              >
+                {generatingDm ? "📱..." : "↺ DM"}
               </button>
             )}
             <motion.button
@@ -503,9 +608,9 @@ export default function LeadPanel({
               </motion.button>
 
               {/* Instagram DM */}
-              {lead.instagram_page && (
+              {igUrl && (
                 <motion.button
-                  onClick={() => handleCopyAndOpen(lead.instagram_page!, setIgCopied)}
+                  onClick={() => handleCopyAndOpen(igUrl, setIgCopied)}
                   whileHover={{ scale: 1.04 }}
                   whileTap={{ scale: 0.96 }}
                   className="rounded-xl px-4 py-2"
