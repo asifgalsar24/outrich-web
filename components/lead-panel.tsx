@@ -452,11 +452,11 @@ export default function LeadPanel({
           </section>
         )}
 
-        {/* Editable email draft */}
+        {/* Editable message draft */}
         <section>
           <div className="flex items-center justify-between mb-3">
             <p style={{ fontWeight: 700, fontSize: "0.78rem", color: "rgba(255,255,255,0.3)", letterSpacing: "0.1em" }} className="uppercase">
-              טיוטת מייל
+              טיוטת הודעה
             </p>
             <div className="flex items-center gap-2">
               {lead.email_approved && !isDirty && (
@@ -512,7 +512,7 @@ export default function LeadPanel({
           <textarea
             value={emailText}
             onChange={(e) => setEmailText(e.target.value)}
-            placeholder={generating ? "כותב..." : "לחץ על 'צור מסר אישי' כדי לייצר טיוטה..."}
+            placeholder={generating ? "כותב..." : "לחץ על 'צור מסר אישי' או '📱 DM' כדי לייצר טיוטה..."}
             rows={emailText ? 10 : 4}
             className="w-full rounded-xl p-5 outline-none resize-none transition-all"
             style={{
@@ -538,7 +538,7 @@ export default function LeadPanel({
                   color: "rgba(255,255,255,0.35)",
                 }}
               >
-                {generating ? "✍️..." : "↺ מייל"}
+                {generating ? "✍️..." : "↺ מסר"}
               </button>
             )}
             {emailText && (
